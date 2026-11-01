@@ -15,10 +15,34 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/treinos/assets/index-DGFJZsuF.js"></script>
-    <link rel="stylesheet" crossorigin href="/treinos/assets/index-DxNgM4Un.css">
+    <script type="module" crossorigin src="/treinos/assets/index-9wHG5A2O.js"></script>
+    <link rel="stylesheet" crossorigin href="/treinos/assets/index-CETK0DcL.css">
   </head>
   <body>
-    <div id="root"></div>
+    <!-- ideia 77: abertura sem tela branca. Fica dentro do #root e o React troca pelo app quando o código chega.
+         Estilo próprio (inline) para aparecer antes de qualquer outro arquivo; o cabeçalho imita o do app. -->
+    <style>
+      @keyframes abertura-pulso { 50% { opacity: .4 } }
+      @keyframes abertura-aviso { to { opacity: 1 } }
+      .abertura-pulso { animation: abertura-pulso 2s cubic-bezier(.4,0,.6,1) infinite; background: #dde4df; border-radius: 12px; }
+      @media (prefers-reduced-motion: reduce) { .abertura-pulso { animation: none } }
+    </style>
+    <div id="root">
+      <div role="status" aria-busy="true" aria-label="Carregando" data-abertura style="min-height:100dvh;background:#f7f5ef;font-family:Figtree,system-ui,-apple-system,sans-serif">
+        <div style="background:#1a5c31;padding-top:env(safe-area-inset-top);color:#fff">
+          <div style="max-width:42rem;margin:0 auto;display:flex;align-items:center;gap:10px;padding:12px 16px">
+            <img src="/treinos/logo-branca.svg" alt="" width="40" height="40" style="flex:none" />
+            <span style="font-family:Fraunces,Georgia,serif;font-variation-settings:'SOFT' 100;font-size:20px;font-weight:600">Duo LuMa</span>
+          </div>
+        </div>
+        <div style="max-width:42rem;margin:0 auto;padding:24px 16px">
+          <div class="abertura-pulso" style="height:28px;width:55%"></div>
+          <div class="abertura-pulso" style="height:14px;width:80%;margin-top:12px"></div>
+          <div class="abertura-pulso" style="height:120px;margin-top:24px;border-radius:24px"></div>
+          <div class="abertura-pulso" style="height:120px;margin-top:12px;border-radius:24px"></div>
+          <p style="margin-top:24px;text-align:center;font-size:15px;color:#5b6b60;opacity:0;animation:abertura-aviso .3s 20s forwards">Ainda carregando. Se não abrir, confira a internet e recarregue a página.</p>
+        </div>
+      </div>
+    </div>
   </body>
 </html>
