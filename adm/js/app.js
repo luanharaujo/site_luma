@@ -1,11 +1,12 @@
-import { S } from './estado.js'
-import { API, ErroApi, token } from './api.js'
-import { ic, TELAS } from './icones.js'
-import { cab, nav, derivar, TELA_R } from './telas.js'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js'
-import { lerArquivo, prepararAnexo } from './leitor.js'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js'
-import { ligarPuxar } from './puxar.js'
+import { S } from './estado.js?v=5b3f7264df'
+import { API, ErroApi, token } from './api.js?v=5b3f7264df'
+import { ic, TELAS } from './icones.js?v=5b3f7264df'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=5b3f7264df'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=5b3f7264df'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=5b3f7264df'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=5b3f7264df'
+import { ligarPuxar } from './puxar.js?v=5b3f7264df'
+import { conferirVersao } from './versao.js?v=5b3f7264df'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -189,7 +190,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=5b3f7264df')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -259,6 +260,8 @@ function iniciar() {
   document.addEventListener('visibilitychange', voltou)
   window.addEventListener('focus', voltou)
   ligarPuxar()
+  conferirVersao()
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conferirVersao() })
   iniciarSessao()
 }
 iniciar()

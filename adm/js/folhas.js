@@ -1,9 +1,9 @@
 // Folhas (painéis que sobem) de Lançar e Retirar.
-import { S } from './estado.js'
-import { ic } from './icones.js'
-import { API } from './api.js'
-import { brl, dbrl, dm, nomeMes, esc, lerReais, reaisTxt, NOME, hojeIso, soma } from './util.js'
-import { chip } from './telas.js'
+import { S } from './estado.js?v=5b3f7264df'
+import { ic } from './icones.js?v=5b3f7264df'
+import { API } from './api.js?v=5b3f7264df'
+import { brl, dbrl, dm, nomeMes, esc, lerReais, reaisTxt, NOME, hojeIso, soma } from './util.js?v=5b3f7264df'
+import { chip } from './telas.js?v=5b3f7264df'
 
 const linha = (a, b) => `<div class="linha"><span>${a}</span><span class="r">${b}</span></div>`
 const cabFolha = (t, voltar) => `<div class="folha-cab">${voltar ? `<button data-acao="passo" data-p="${voltar}" aria-label="Voltar">${ic('voltar')}</button>` : ''}<h3>${t}</h3><button data-acao="fechar" aria-label="Fechar">${ic('x')}</button></div>`
