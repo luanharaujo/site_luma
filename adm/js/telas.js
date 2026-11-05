@@ -25,7 +25,7 @@ const mesAnterior = () => antMes(mesAberto())
 
 export function cab() {
   const r = S.resumo
-  return `<header class="cab"><span class="logo"></span><div class="cab-tit">Duo LuMa<small>Financeiro${r ? ' · ' + mesAno(r.mes_aberto) : ''}</small></div><span class="vivo"><i></i>atualizado ${S.atualizadoEm || ''}</span></header>`
+  return `<header class="cab"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><div class="cab-tit">Duo LuMa<small>Financeiro${r ? ' · ' + mesAno(r.mes_aberto) : ''}</small></div><span class="vivo"><i></i>atualizado ${S.atualizadoEm || ''}</span></header>`
 }
 export function nav() {
   return `<nav class="nav" aria-label="Seções">${TELAS.map((t) => `<button class="nav-i ${S.tela === t.id ? 'ativo' : ''}" data-acao="ir" data-t="${t.id}">${ic(t.id)}<span>${t.nome}</span></button>`).join('')}</nav>`

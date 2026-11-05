@@ -5,6 +5,7 @@ import { cab, nav, derivar, TELA_R } from './telas.js'
 import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js'
 import { lerArquivo, prepararAnexo } from './leitor.js'
 import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js'
+import { ligarPuxar } from './puxar.js'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -69,9 +70,9 @@ const voltou = () => { if (document.visibilityState === 'hidden' || S.fase !== '
 /* ===== desenho ===== */
 function render() {
   if (S.fase === 'carregando') { raiz.innerHTML = '<p class="carregando">Abrindo…</p>'; return }
-  if (S.fase === 'restrito') { raiz.innerHTML = '<div class="restrito"><span class="logo"></span><h1>Área restrita</h1><p>Só o Luan e a Mari entram aqui. Faça login pelo WhatsApp do Duo.</p><a class="btn" href="/treinos/">Entrar</a></div>'; estilizar(raiz); return }
-  if (S.fase === 'proibido') { raiz.innerHTML = '<div class="restrito"><span class="logo"></span><h1>Só o Luan e a Mari</h1><p>Seu login não dá acesso a esta área.</p><a class="btn" href="/">Voltar ao site</a></div>'; estilizar(raiz); return }
-  if (S.fase === 'erro') { raiz.innerHTML = '<div class="restrito"><span class="logo"></span><h1>Sem conexão</h1><p>Não deu para conferir o login agora.</p><button class="btn" data-acao="de-novo">Tentar de novo</button></div>'; estilizar(raiz); return }
+  if (S.fase === 'restrito') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Área restrita</h1><p>Só o Luan e a Mari entram aqui. Faça login pelo WhatsApp do Duo.</p><a class="btn" href="/treinos/">Entrar</a></div>'; estilizar(raiz); return }
+  if (S.fase === 'proibido') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Só o Luan e a Mari</h1><p>Seu login não dá acesso a esta área.</p><a class="btn" href="/">Voltar ao site</a></div>'; estilizar(raiz); return }
+  if (S.fase === 'erro') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Sem conexão</h1><p>Não deu para conferir o login agora.</p><button class="btn" data-acao="de-novo">Tentar de novo</button></div>'; estilizar(raiz); return }
   if (S.folha && S.folha.passo === 'campos' && document.querySelector('.folha input:focus')) return
   const tela = document.getElementById('tela')
   const keep = tela && raiz.dataset.tela === S.tela ? tela.scrollTop : 0
@@ -257,6 +258,7 @@ function iniciar() {
   window.addEventListener('hashchange', () => { if (S.fase !== 'ok') return; S.tela = hashTela(); S.folha = null; render(); recarrega(); const t = document.getElementById('tela'); if (t) t.scrollTop = 0 })
   document.addEventListener('visibilitychange', voltou)
   window.addEventListener('focus', voltou)
+  ligarPuxar()
   iniciarSessao()
 }
 iniciar()

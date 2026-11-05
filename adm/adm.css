@@ -278,3 +278,15 @@ a.btn{text-decoration:none}
 table.t th,table.t td{padding:6px 6px}
 
 .linha.arq .r{white-space:normal;overflow-wrap:anywhere;font-size:.82rem}
+
+/* logo leva à página principal do site (como no /treinos) */
+.logo-link{display:inline-flex;flex:none;border-radius:50%;-webkit-tap-highlight-color:transparent}
+.logo-link:focus-visible{outline:2px solid var(--ouro,#c2a14b);outline-offset:2px}
+/* puxar para atualizar (modo app do iPhone não tem recarregar) */
+.puxar{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 6px);z-index:60;display:flex;align-items:center;gap:8px;padding:7px 14px;border-radius:999px;background:#123b29;color:#efe3b8;font:600 .78rem/1 'Public Sans',system-ui,sans-serif;box-shadow:0 8px 20px -8px rgba(0,0,0,.45);opacity:0;pointer-events:none;transform:translate(-50%,calc(var(--puxar,0px) - 56px));transition:opacity .15s}
+.puxar.visivel{opacity:1}
+.puxar-seta{display:inline-block;transition:transform .15s}
+.puxar.pronto .puxar-seta{transform:rotate(180deg)}
+.puxar.carregando .puxar-seta{animation:puxar-gira .8s linear infinite}
+@keyframes puxar-gira{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion: reduce){.puxar,.puxar-seta{transition:none}.puxar.carregando .puxar-seta{animation:none}}
