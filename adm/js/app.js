@@ -1,13 +1,13 @@
-import { S } from './estado.js?v=f769ddbe75'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=f769ddbe75'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=f769ddbe75'
-import { ic, TELAS } from './icones.js?v=f769ddbe75'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=f769ddbe75'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=f769ddbe75'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=f769ddbe75'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=f769ddbe75'
-import { ligarPuxar } from './puxar.js?v=f769ddbe75'
-import { conferirVersao } from './versao.js?v=f769ddbe75'
+import { S } from './estado.js?v=ca4851692a'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=ca4851692a'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=ca4851692a'
+import { ic, TELAS } from './icones.js?v=ca4851692a'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=ca4851692a'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=ca4851692a'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=ca4851692a'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=ca4851692a'
+import { ligarPuxar } from './puxar.js?v=ca4851692a'
+import { conferirVersao } from './versao.js?v=ca4851692a'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -206,7 +206,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=f769ddbe75')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=ca4851692a')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -320,6 +320,8 @@ async function iniciarCondicional() {
     // o navegador recusou o modo na hora (diz que tem, mas não tem): fica só o botão, sem repetir pedidos ao servidor
     if (!ctrl.signal.aborted && (Date.now() - inicio < 3000 || ++S.condFalhas >= 3)) { S.preenche = false; render(); return }
     if (!ctrl.signal.aborted) { S.msgLogin = erroPasskey(e); atualizaEntrada() } // cancelou o Face ID depois de escolher
+    // aba escondida (app em segundo plano, aba esquecida no computador): não renova a noite toda; volta quando a aba aparecer
+    if (document.hidden) { S.condPausada = true; return }
     if (!S.opEntrar) await prepararEntrada()
     iniciarCondicional()
     return
@@ -516,6 +518,12 @@ function iniciar() {
   // com a sessão aberta, puxar para atualizar só recarrega os dados (recarregar a página pediria o Face ID de novo, trava T1)
   ligarPuxar(() => (S.fase === 'ok' ? Promise.all([aoMudar('puxar'), conferirVersao()]) : null))
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conferirVersao() })
+  // retoma o preenchimento automático pausado com a aba escondida (desafio novo, pedido novo)
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible' || !S.condPausada || S.fase !== 'entrar') return
+    S.condPausada = false
+    prepararEntrada().then(() => iniciarCondicional())
+  })
   // primeiro a versão (pode reabrir a página com o mesmo #cadastro=...), depois o login
   conferirVersao().then((reabrindo) => { if (!reabrindo) iniciarSessao() })
 }
