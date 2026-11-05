@@ -1,13 +1,13 @@
-import { S } from './estado.js?v=c87da59460'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=c87da59460'
-import { criarPasskey, erroPasskey, suportaPasskey, usarPasskey } from './passkey.js?v=c87da59460'
-import { ic, TELAS } from './icones.js?v=c87da59460'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=c87da59460'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=c87da59460'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=c87da59460'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=c87da59460'
-import { ligarPuxar } from './puxar.js?v=c87da59460'
-import { conferirVersao } from './versao.js?v=c87da59460'
+import { S } from './estado.js?v=0678f37303'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=0678f37303'
+import { criarPasskey, erroPasskey, suportaPasskey, usarPasskey } from './passkey.js?v=0678f37303'
+import { ic, TELAS } from './icones.js?v=0678f37303'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=0678f37303'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=0678f37303'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=0678f37303'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=0678f37303'
+import { ligarPuxar } from './puxar.js?v=0678f37303'
+import { conferirVersao } from './versao.js?v=0678f37303'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -72,7 +72,7 @@ const voltou = () => { if (document.visibilityState === 'hidden' || S.fase !== '
 /* ===== desenho ===== */
 function render() {
   if (S.fase === 'carregando') { raiz.innerHTML = '<p class="carregando">Abrindo…</p>'; return }
-  if (S.fase === 'entrar') { raiz.innerHTML = telaEntrar(); estilizar(raiz); return }
+  if (S.fase === 'entrar') { const colado = (document.getElementById('colar-link') || {}).value || ''; raiz.innerHTML = telaEntrar(); estilizar(raiz); if (colado) document.getElementById('colar-link').value = colado; return }
   if (S.fase === 'cadastro') { raiz.innerHTML = telaCadastro(); estilizar(raiz); return }
   if (S.fase === 'proibido') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Só o Luan e a Mari</h1><p>Seu login não dá acesso a esta área.</p><a class="btn" href="/">Voltar ao site</a></div>'; estilizar(raiz); return }
   if (S.fase === 'erro') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Sem conexão</h1><p>Não deu para conferir o login agora.</p><button class="btn" data-acao="de-novo">Tentar de novo</button></div>'; estilizar(raiz); return }
@@ -180,6 +180,7 @@ const ACOES = {
     return escreve(() => API.voto(d.id, d.v), 'Voto registrado.')
   },
   'entrar-faceid': () => entrarFaceId(),
+  'colar-link': () => colarLink(),
   cadastrar: () => cadastrarFaceId(),
   'cadastro-continuar': () => prepararCadastro(),
   'ir-entrar': () => { S.cad = null; S.convite = null; tirarCodigo(); S.fase = 'entrar'; S.msgLogin = ''; render(); prepararEntrada() },
@@ -205,7 +206,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=c87da59460')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=0678f37303')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -257,7 +258,20 @@ function telaEntrar() {
   const pronto = !!S.opEntrar && !S.ocupado
   return `<div class="restrito">${LOGO}<h1>Financeiro</h1><p>${esc(S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.')}</p>`
     + `<button class="btn" data-acao="entrar-faceid"${pronto || S.semRede ? '' : ' disabled'}>${S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'}</button>`
-    + '<p class="nota-login">Primeira vez neste aparelho? O cadastro é por um link de uso único que chega no seu WhatsApp.</p></div>'
+    + '<div class="colar"><p class="nota-login">Primeira vez neste aparelho? No WhatsApp, toque e segure o link de cadastro, copie e cole aqui:</p>'
+    + '<input id="colar-link" class="colar-campo" type="text" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Colar o link de cadastro" aria-label="Link de cadastro">'
+    + '<button class="btn sec" data-acao="colar-link">Cadastrar com este link</button></div></div>'
+}
+// No app da tela de início do iPhone o link do WhatsApp abre no Safari, que não tem o login do /treinos: colando o link aqui, o
+// cadastro segue dentro do app, com o login que já está nele. Mesmo código e mesmas travas do servidor (uso único, telefone, Face ID).
+function colarLink() {
+  const campo = document.getElementById('colar-link')
+  const t = ((campo && campo.value) || '').trim()
+  const m = /[#?&]cadastro=([A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])/.exec(t) || /^([A-Za-z0-9_-]{43})$/.exec(t)
+  if (!m) { S.msgLogin = 'Isso não parece o link de cadastro. No WhatsApp, toque e segure o link, toque em Copiar e cole aqui o link inteiro.'; render(); return }
+  if (campo) campo.value = ''
+  S.convite = m[1]; S.msgLogin = ''; S.fase = 'cadastro'
+  prepararCadastro()
 }
 // Pede o desafio ANTES do toque: no iPhone o Face ID precisa ser chamado direto do toque, sem esperar a rede.
 async function prepararEntrada() {
