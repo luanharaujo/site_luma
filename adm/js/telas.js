@@ -1,6 +1,6 @@
-import { S } from './estado.js?v=0678f37303'
-import { ic, TELAS } from './icones.js?v=0678f37303'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=0678f37303'
+import { S } from './estado.js?v=f769ddbe75'
+import { ic, TELAS } from './icones.js?v=f769ddbe75'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=f769ddbe75'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`

@@ -1,13 +1,13 @@
-import { S } from './estado.js?v=0678f37303'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=0678f37303'
-import { criarPasskey, erroPasskey, suportaPasskey, usarPasskey } from './passkey.js?v=0678f37303'
-import { ic, TELAS } from './icones.js?v=0678f37303'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=0678f37303'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=0678f37303'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=0678f37303'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=0678f37303'
-import { ligarPuxar } from './puxar.js?v=0678f37303'
-import { conferirVersao } from './versao.js?v=0678f37303'
+import { S } from './estado.js?v=f769ddbe75'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=f769ddbe75'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=f769ddbe75'
+import { ic, TELAS } from './icones.js?v=f769ddbe75'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=f769ddbe75'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=f769ddbe75'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=f769ddbe75'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=f769ddbe75'
+import { ligarPuxar } from './puxar.js?v=f769ddbe75'
+import { conferirVersao } from './versao.js?v=f769ddbe75'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -63,7 +63,7 @@ async function recarrega() {
 }
 // Sessão vencida (8 h, 30 min parada) ou encerrada: volta para a entrada com Face ID; nada da sessão fica guardado.
 function tratarLogin(e) {
-  if (e instanceof ErroApi && e.status === 401) { defineSessao(null); S.folha = null; S.fase = 'entrar'; S.msgLogin = 'Sessão encerrada. Abra com Face ID de novo.'; render(); prepararEntrada(); return true }
+  if (e instanceof ErroApi && e.status === 401) { defineSessao(null); S.folha = null; abrirEntrada('Sessão encerrada. Abra com Face ID de novo.'); return true }
   return false
 }
 let ultimaVolta = 0
@@ -183,7 +183,7 @@ const ACOES = {
   'colar-link': () => colarLink(),
   cadastrar: () => cadastrarFaceId(),
   'cadastro-continuar': () => prepararCadastro(),
-  'ir-entrar': () => { S.cad = null; S.convite = null; tirarCodigo(); S.fase = 'entrar'; S.msgLogin = ''; render(); prepararEntrada() },
+  'ir-entrar': () => { S.cad = null; S.convite = null; tirarCodigo(); abrirEntrada('') },
   'aprovar-faceid': () => aprovarFaceId(),
   acesso: () => abrirAcesso(),
   'remover-passkey': (d) => removerPasskey(d.id),
@@ -206,7 +206,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=0678f37303')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=f769ddbe75')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -255,12 +255,32 @@ const NOMEP = { luan: 'Luan', mari: 'Mari' }
 const VALE_MS = 4 * 60e3 // o servidor dá 5 min para cada desafio; passou de 4, pede outro
 
 function telaEntrar() {
-  const pronto = !!S.opEntrar && !S.ocupado
-  return `<div class="restrito">${LOGO}<h1>Financeiro</h1><p>${esc(S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.')}</p>`
-    + `<button class="btn" data-acao="entrar-faceid"${pronto || S.semRede ? '' : ' disabled'}>${S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'}</button>`
+  const pronto = (!!S.opEntrar || S.semRede) && !S.ocupado
+  const auto = S.preenche
+    ? '<div class="entrar-auto"><label class="nota-login" for="entrar-campo">Toque no campo e escolha o Face ID na barra acima do teclado:</label>'
+      + '<input id="entrar-campo" class="colar-campo" type="text" name="username" autocomplete="username webauthn" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Entrar com Face ID" aria-label="Entrar com Face ID"></div>'
+    : ''
+  return `<div class="restrito">${LOGO}<h1>Financeiro</h1><p id="entrar-msg">${esc(S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.')}</p>`
+    + auto
+    + `<button class="btn${S.preenche ? ' sec' : ''}" data-acao="entrar-faceid"${pronto ? '' : ' disabled'}>${S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'}</button>`
     + '<div class="colar"><p class="nota-login">Primeira vez neste aparelho? No WhatsApp, toque e segure o link de cadastro, copie e cole aqui:</p>'
     + '<input id="colar-link" class="colar-campo" type="text" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Colar o link de cadastro" aria-label="Link de cadastro">'
     + '<button class="btn sec" data-acao="colar-link">Cadastrar com este link</button></div></div>'
+}
+// Atualiza só a mensagem e o botão, sem redesenhar: redesenhar fecharia o teclado de quem já tocou no campo do Face ID.
+function atualizaEntrada() {
+  if (S.fase !== 'entrar') return
+  const b = raiz.querySelector('[data-acao=entrar-faceid]'), m = document.getElementById('entrar-msg')
+  if (!b || !m) { render(); return }
+  m.textContent = S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.'
+  b.disabled = !((!!S.opEntrar || S.semRede) && !S.ocupado)
+  b.textContent = S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'
+}
+// Abre a tela de entrada: desenha, pede um desafio para o botão e deixa aberto o pedido do preenchimento automático.
+function abrirEntrada(msg = '') {
+  S.fase = 'entrar'; S.msgLogin = msg; S.ocupado = false
+  render()
+  prepararEntrada().then(() => iniciarCondicional())
 }
 // No app da tela de início do iPhone o link do WhatsApp abre no Safari, que não tem o login do /treinos: colando o link aqui, o
 // cadastro segue dentro do app, com o login que já está nele. Mesmo código e mesmas travas do servidor (uso único, telefone, Face ID).
@@ -268,8 +288,9 @@ function colarLink() {
   const campo = document.getElementById('colar-link')
   const t = ((campo && campo.value) || '').trim()
   const m = /[#?&]cadastro=([A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])/.exec(t) || /^([A-Za-z0-9_-]{43})$/.exec(t)
-  if (!m) { S.msgLogin = 'Isso não parece o link de cadastro. No WhatsApp, toque e segure o link, toque em Copiar e cole aqui o link inteiro.'; render(); return }
+  if (!m) { S.msgLogin = 'Isso não parece o link de cadastro. No WhatsApp, toque e segure o link, toque em Copiar e cole aqui o link inteiro.'; atualizaEntrada(); return }
   if (campo) campo.value = ''
+  if (S.condCtrl) { S.modalEmCurso = true; S.condCtrl.abort(); S.condCtrl = null } // o cadastro vai usar o WebAuthn
   S.convite = m[1]; S.msgLogin = ''; S.fase = 'cadastro'
   prepararCadastro()
 }
@@ -277,22 +298,61 @@ function colarLink() {
 async function prepararEntrada() {
   S.opEntrar = null; S.semRede = false
   try { S.opEntrar = { op: await LOGIN.opcoesEntrar(), em: Date.now() } } catch (e) { S.semRede = true; S.msgLogin = e instanceof ErroApi && e.status ? e.message : 'Sem conexão com o servidor. Toque para tentar de novo.' }
-  if (S.fase === 'entrar') render()
+  atualizaEntrada()
 }
-async function entrarFaceId() {
-  if (!suportaPasskey()) { S.msgLogin = 'Este navegador não tem Face ID para sites. Use o Safari ou o Chrome atualizados.'; render(); return }
-  if (!S.opEntrar || Date.now() - S.opEntrar.em > VALE_MS) { await prepararEntrada(); if (S.opEntrar) { S.msgLogin = 'Toque de novo para abrir.'; render() } return }
+// Preenchimento automático (pedido do Luan, 05/11: sumir a folha "Continuar" do sistema antes do Face ID): o pedido fica aberto com a
+// tela; tocar no campo mostra a passkey acima do teclado e escolher vai direto ao Face ID. O desafio vale 5 min no servidor: renova a cada 4.
+async function iniciarCondicional() {
+  if (!S.preenche || S.fase !== 'entrar' || S.condCtrl || !S.opEntrar) return
   const o = S.opEntrar.op
-  S.opEntrar = null; S.ocupado = true; render()
+  const ctrl = new AbortController()
+  S.condCtrl = ctrl; S.modalEmCurso = false
+  const renovar = setTimeout(() => ctrl.abort(), VALE_MS)
+  const inicio = Date.now()
+  prepararEntrada() // o botão de reserva ganha um desafio próprio
+  let r
   try {
-    const s = await LOGIN.entrar(await usarPasskey(o))
-    defineSessao(s.sessao); S.msgLogin = ''
-    S.ocupado = false
+    r = await usarPasskey(o, { condicional: true, signal: ctrl.signal })
+  } catch (e) {
+    clearTimeout(renovar)
+    if (S.condCtrl === ctrl) S.condCtrl = null
+    if (S.modalEmCurso || S.fase !== 'entrar') return // o botão ou o cadastro assumiram
+    // o navegador recusou o modo na hora (diz que tem, mas não tem): fica só o botão, sem repetir pedidos ao servidor
+    if (!ctrl.signal.aborted && (Date.now() - inicio < 3000 || ++S.condFalhas >= 3)) { S.preenche = false; render(); return }
+    if (!ctrl.signal.aborted) { S.msgLogin = erroPasskey(e); atualizaEntrada() } // cancelou o Face ID depois de escolher
+    if (!S.opEntrar) await prepararEntrada()
+    iniciarCondicional()
+    return
+  }
+  clearTimeout(renovar)
+  if (S.condCtrl === ctrl) S.condCtrl = null
+  S.ocupado = true; atualizaEntrada()
+  try {
+    const s = await LOGIN.entrar(r)
+    defineSessao(s.sessao); S.msgLogin = ''; S.ocupado = false; S.condFalhas = 0
     await abrirComSessao()
   } catch (e) {
-    S.ocupado = false
-    S.msgLogin = e instanceof ErroApi ? e.message : erroPasskey(e)
-    S.fase = 'entrar'; render(); prepararEntrada()
+    // o servidor recusou (ex.: Face ID removido): na 3ª seguida, fica só o botão (nunca um laço de pedidos)
+    if (++S.condFalhas >= 3) S.preenche = false
+    abrirEntrada(e instanceof ErroApi ? e.message : erroPasskey(e))
+  }
+}
+// Botão de reserva (modo normal, com a folha do sistema): fecha o pedido do preenchimento e chama o Face ID ainda dentro do toque.
+async function entrarFaceId() {
+  if (!suportaPasskey()) { S.msgLogin = 'Este navegador não tem Face ID para sites. Use o Safari ou o Chrome atualizados.'; atualizaEntrada(); return }
+  if (!S.opEntrar || Date.now() - S.opEntrar.em > VALE_MS) { await prepararEntrada(); if (S.opEntrar) { S.msgLogin = 'Toque de novo para abrir.'; atualizaEntrada() } return }
+  const o = S.opEntrar.op
+  S.opEntrar = null; S.ocupado = true
+  if (S.condCtrl) { S.modalEmCurso = true; S.condCtrl.abort(); S.condCtrl = null }
+  atualizaEntrada()
+  const pedido = usarPasskey(o) // navigator.credentials.get sai aqui, ainda no toque
+  try {
+    const s = await LOGIN.entrar(await pedido)
+    defineSessao(s.sessao); S.msgLogin = ''; S.ocupado = false; S.modalEmCurso = false
+    await abrirComSessao()
+  } catch (e) {
+    S.modalEmCurso = false
+    abrirEntrada(e instanceof ErroApi ? e.message : erroPasskey(e))
   }
 }
 async function abrirComSessao() {
@@ -300,7 +360,7 @@ async function abrirComSessao() {
     const eu = await API.eu()
     S.eu = eu.pessoa; S.apelido = eu.apelido || ''
   } catch (e) {
-    if (e instanceof ErroApi && e.status === 401) { S.fase = 'entrar'; render(); prepararEntrada(); return }
+    if (e instanceof ErroApi && e.status === 401) { abrirEntrada(''); return }
     S.fase = e instanceof ErroApi && e.status === 403 ? 'proibido' : 'erro'; render(); return
   }
   S.fase = 'ok'; S.tela = hashTela(); render()
@@ -437,8 +497,8 @@ async function iniciarSessao() {
   if (convite) { S.convite = convite; S.fase = 'cadastro'; return prepararCadastro() }
   if (aprovar && /^regras:[0-9a-f]{40}$/.test(aprovar)) S.pedido = { proposito: aprovar, texto: q.get('texto') || '' }
   if (temSessao()) { S.fase = 'carregando'; render(); return abrirComSessao() } // só a prévia local entra assim
-  S.fase = 'entrar'; S.msgLogin = ''; render()
-  prepararEntrada()
+  S.preenche = await suportaPreenchimento(); S.condFalhas = 0
+  abrirEntrada('')
 }
 
 function iniciar() {

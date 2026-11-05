@@ -4,6 +4,11 @@ const paraBuf = (s) => { const t = s.replace(/-/g, '+').replace(/_/g, '/'); cons
 const deBuf = (b) => { const u = new Uint8Array(b); let s = ''; for (const x of u) s += String.fromCharCode(x); return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '') }
 
 export const suportaPasskey = () => !!(window.PublicKeyCredential && navigator.credentials && navigator.credentials.create && navigator.credentials.get)
+// Modo preenchimento automático (WebAuthn mediation "conditional"): a passkey aparece acima do teclado e vai direto ao Face ID, sem a
+// folha do sistema que o modo normal mostra antes ("Usar a chave-senha...? Continuar").
+export async function suportaPreenchimento() {
+  try { return !!(window.PublicKeyCredential && PublicKeyCredential.isConditionalMediationAvailable && (await PublicKeyCredential.isConditionalMediationAvailable())) } catch (e) { return false }
+}
 
 export async function criarPasskey(o) {
   const cred = await navigator.credentials.create({ publicKey: {
@@ -17,11 +22,15 @@ export async function criarPasskey(o) {
   return { id: cred.id, clientDataJSON: deBuf(r.clientDataJSON), authenticatorData: deBuf(r.getAuthenticatorData()), publicKey: deBuf(chave), publicKeyAlgorithm: r.getPublicKeyAlgorithm() }
 }
 
-export async function usarPasskey(o) {
-  const cred = await navigator.credentials.get({ publicKey: {
-    challenge: paraBuf(o.challenge), rpId: o.rpId, userVerification: o.userVerification, timeout: o.timeout,
-    allowCredentials: (o.allowCredentials || []).map((c) => ({ type: 'public-key', id: paraBuf(c.id) })),
-  } })
+// condicional: pedido no modo preenchimento automático (fica aberto até a pessoa escolher a passkey no teclado ou o signal abortar).
+// Sem ele, chame direto do toque (no iPhone o Face ID precisa nascer do gesto).
+export async function usarPasskey(o, { condicional = false, signal } = {}) {
+  const publicKey = {
+    challenge: paraBuf(o.challenge), rpId: o.rpId, userVerification: o.userVerification,
+    allowCredentials: condicional ? [] : (o.allowCredentials || []).map((c) => ({ type: 'public-key', id: paraBuf(c.id) })),
+  }
+  if (!condicional) publicKey.timeout = o.timeout
+  const cred = await navigator.credentials.get(condicional ? { publicKey, mediation: 'conditional', signal } : { publicKey })
   const r = cred.response
   return { id: cred.id, clientDataJSON: deBuf(r.clientDataJSON), authenticatorData: deBuf(r.authenticatorData), signature: deBuf(r.signature), userHandle: r.userHandle ? deBuf(r.userHandle) : null }
 }

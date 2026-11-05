@@ -1,5 +1,5 @@
 // Estado único da página. Nada daqui é guardado no navegador; vem da API a cada carga.
-import { hojeIso } from './util.js?v=0678f37303'
+import { hojeIso } from './util.js?v=f769ddbe75'
 export const S = {
   fase: 'carregando', // carregando | ok | restrito | proibido | erro
   eu: null, apelido: '',
