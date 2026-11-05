@@ -10,6 +10,12 @@
   <meta property="og:description" content="Mão a mão e partner stunt em Brasília. Vem treinar com a gente." />
   <meta property="og:image" content="https://duoluma.com.br/img/capa-larga.jpg" />
   <link rel="icon" href="img/logo-branca.svg" type="image/svg+xml" />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="apple-touch-icon" href="/img/icon-180.png?v=2" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Duo LuMa" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&display=swap" rel="stylesheet" />
@@ -19,7 +25,7 @@
       --noite: #0b120d;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    html, body { height: 100%; }
+    html, body { height: 100%; background: var(--noite); }
     body {
       background: var(--noite);
       color: #fff;
@@ -28,8 +34,10 @@
     }
     .capa {
       position: relative;
+      /* tela inteira, inclusive atrás da barra de status e da barrinha de baixo (app na tela de início) */
       min-height: 100vh;
-      min-height: 100svh;
+      min-height: 100lvh;
+      min-height: 100dvh;
       display: flex;
       align-items: flex-end;
       overflow: hidden;
@@ -43,19 +51,38 @@
     .capa::after {
       content: "";
       position: absolute; inset: 0;
-      background: linear-gradient(180deg, rgba(11,18,13,0) 35%, rgba(11,18,13,.55) 60%, rgba(10,36,20,.96) 100%);
+      background:
+        linear-gradient(180deg, rgba(11,18,13,.55) 0, rgba(11,18,13,0) calc(70px + env(safe-area-inset-top))),
+        linear-gradient(180deg, rgba(11,18,13,0) 35%, rgba(11,18,13,.55) 60%, rgba(10,36,20,.96) 100%);
     }
     .conteudo {
       position: relative; z-index: 1;
       width: 100%;
-      padding: 0 16px calc(28px + env(safe-area-inset-bottom));
+      padding: 0 calc(16px + env(safe-area-inset-right)) calc(28px + env(safe-area-inset-bottom)) calc(16px + env(safe-area-inset-left));
       display: flex; flex-direction: column; align-items: center; text-align: center;
     }
     .logo { width: 150px; height: 150px; filter: drop-shadow(0 6px 24px rgba(0,0,0,.45)); display: none; }
     .logo-topo {
-      position: absolute; z-index: 1; top: calc(16px + env(safe-area-inset-top)); left: 16px;
+      position: absolute; z-index: 2; top: calc(12px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left));
       width: 64px; height: 64px; filter: drop-shadow(0 4px 14px rgba(0,0,0,.5));
     }
+    /* menu do duo: só existe para o Luan e a Mari logados (o script liga) */
+    .logo-topo.do-duo, .logo.do-duo { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .logo-topo.do-duo:active, .logo.do-duo:active { transform: scale(.94); }
+    .menu-duo {
+      position: absolute; z-index: 3; top: calc(84px + env(safe-area-inset-top)); left: calc(16px + env(safe-area-inset-left));
+      min-width: 220px; padding: 8px; border-radius: 18px;
+      background: rgba(11,18,13,.82); border: 1px solid rgba(255,255,255,.18);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+      box-shadow: 0 14px 40px rgba(0,0,0,.45);
+    }
+    .menu-duo[hidden] { display: none; }
+    .menu-duo p { font-size: .75rem; letter-spacing: .08em; text-transform: uppercase; color: #9fb3a5; padding: 6px 10px 4px; }
+    .menu-duo a {
+      display: block; padding: 12px 10px; border-radius: 12px;
+      color: #fff; text-decoration: none; font-weight: 600; font-size: 1.02rem;
+    }
+    .menu-duo a:hover, .menu-duo a:active { background: rgba(255,255,255,.1); }
     h1 {
       font-family: Fraunces, Georgia, serif;
       font-variation-settings: "SOFT" 100;
@@ -88,6 +115,7 @@
       .conteudo { width: 50%; max-width: 640px; padding: 0 0 0 7vw; align-items: flex-start; text-align: left; }
       .logo { display: block; }
       .logo-topo { display: none; }
+      .menu-duo { top: auto; left: 7vw; bottom: 8vh; }
       .botoes { grid-template-columns: 1fr 1fr; max-width: 480px; }
     }
   </style>
@@ -99,6 +127,10 @@
       <img class="foto" src="img/capa-alta.jpg" alt="Mari no ar em toe touch, lançada pelo Luan, num treino na UnB" />
     </picture>
     <img class="logo-topo" src="img/logo-branca.svg" alt="Logo do Duo LuMa" />
+    <nav class="menu-duo" id="menu-duo" hidden aria-label="Áreas do duo">
+      <p>Só Luan e Mari</p>
+      <a href="/adm/contabilidade/">Contabilidade</a>
+    </nav>
     <div class="conteudo">
       <img class="logo" src="img/logo-branca.svg" alt="" />
       <h1>Duo LuMa</h1>
@@ -115,5 +147,49 @@
       <p class="rodape">Brasília, DF</p>
     </div>
   </main>
+  <script>
+    // Menu do duo: a capa lê o mesmo login do /treinos (localStorage "luma_token", mesma origem) e pergunta à API
+    // quem é. Só o Luan e a Mari (duo_real) ganham o toque na logo. Isto só esconde o menu: os dados da área
+    // administrativa são protegidos pela API, nunca por esta página (o site é público).
+    (function () {
+      var API = 'https://treinos-api.duoluma.workers.dev'
+      var tok = null
+      try { tok = localStorage.getItem('luma_token') } catch (e) {}
+      if (!tok) return
+      var menu = document.getElementById('menu-duo')
+      var logos = document.querySelectorAll('.logo-topo, .logo')
+      function ligar() {
+        logos.forEach(function (l) {
+          if (l.classList.contains('do-duo')) return
+          l.classList.add('do-duo')
+          l.setAttribute('role', 'button')
+          l.setAttribute('tabindex', '0')
+          l.setAttribute('aria-controls', 'menu-duo')
+          l.setAttribute('aria-expanded', 'false')
+          l.addEventListener('click', alternar)
+          l.addEventListener('keydown', function (ev) { if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); alternar(ev) } })
+        })
+      }
+      function desligar() {
+        menu.hidden = true
+        logos.forEach(function (l) {
+          l.classList.remove('do-duo'); l.removeAttribute('role'); l.removeAttribute('tabindex')
+          l.removeEventListener('click', alternar)
+        })
+      }
+      function alternar(ev) {
+        ev.stopPropagation()
+        menu.hidden = !menu.hidden
+        logos.forEach(function (l) { l.setAttribute('aria-expanded', String(!menu.hidden)) })
+      }
+      document.addEventListener('click', function (ev) { if (!menu.hidden && !menu.contains(ev.target)) menu.hidden = true })
+      // resposta rápida pelo que o /treinos guardou; a API confirma em seguida
+      try { if (localStorage.getItem('luma_duo') === '1') ligar() } catch (e) {}
+      fetch(API + '/eu', { headers: { Authorization: 'Bearer ' + tok } })
+        .then(function (r) { return r.ok ? r.json() : null })
+        .then(function (eu) { if (eu && (eu.duo_real || eu.duo)) ligar(); else desligar() })
+        .catch(function () {})
+    })()
+  </script>
 </body>
 </html>
