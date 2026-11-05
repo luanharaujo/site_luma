@@ -1,15 +1,17 @@
 // Único lugar com os endereços das páginas do /adm. Roda primeiro: também recusa rodar dentro de iframe.
 if (window.top !== window.self) { document.documentElement.innerHTML = ''; throw new Error('Esta página não abre dentro de outra.') }
 window.ADM_CONFIG = {
-  versao: '5b3f7264df', // carimbada pelo scripts/publicar.sh na cópia publicada
+  versao: 'c87da59460', // carimbada pelo scripts/publicar.sh na cópia publicada
   api: 'https://adm-api.duoluma.workers.dev',
-  exceljs: '/adm/vendor/exceljs.min.js?v=5b3f7264df',
-  pdfjs: '/adm/vendor/pdf.min.js?v=5b3f7264df',
-  pdfworker: '/adm/vendor/pdf.worker.min.js?v=5b3f7264df',
+  exceljs: '/adm/vendor/exceljs.min.js?v=c87da59460',
+  pdfjs: '/adm/vendor/pdf.min.js?v=c87da59460',
+  pdfworker: '/adm/vendor/pdf.worker.min.js?v=c87da59460',
 }
-// Só na prévia local (127.0.0.1): aponta para a API de mentira e aceita ?token= para entrar sem login.
-if (location.hostname === '127.0.0.1') {
+// Só na prévia local: aponta para a API de mentira (127.0.0.1:8965; a integração troca a porta) e, com ?token=, usa esse valor como
+// sessão do ADM só em memória (a API de mentira aceita "luan"/"mari"). localhost: o Face ID de teste (WebAuthn não aceita IP).
+if (location.hostname === '127.0.0.1' || location.hostname === 'localhost') {
   window.ADM_CONFIG.api = 'http://127.0.0.1:8965'
   window.ADM_CONFIG.previa = true
-  try { const t = new URLSearchParams(location.search).get('token'); if (t) localStorage.setItem('luma_token', t) } catch (e) { /* sem storage */ }
+  const t = new URLSearchParams(location.search).get('token')
+  if (t) window.ADM_CONFIG.previaSessao = t
 }

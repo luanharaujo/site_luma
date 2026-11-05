@@ -290,3 +290,11 @@ table.t th,table.t td{padding:6px 6px}
 .puxar.carregando .puxar-seta{animation:puxar-gira .8s linear infinite}
 @keyframes puxar-gira{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion: reduce){.puxar,.puxar-seta{transition:none}.puxar.carregando .puxar-seta{animation:none}}
+/* entrada e cadastro com Face ID (A1) */
+.restrito .btn.sec{background:transparent;color:var(--ouro);border-color:var(--ouro)}
+.restrito .btn:disabled{opacity:.55}
+.restrito .nota-login{font-size:.78rem;opacity:.75;max-width:30ch;justify-self:center}
+.cab .sair{border:1px solid currentColor;background:transparent;color:inherit;font:inherit;font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:2px;cursor:pointer;opacity:.8;flex:none}
+.cab .sair:hover,.cab .sair:focus-visible{opacity:1}
+/* aprovação assinada (T5): o texto que vale como OK do Luan, como foi recebido */
+.aprovar-texto{white-space:pre-wrap;word-break:break-word;font-family:var(--f-mono,"IBM Plex Mono",monospace);font-size:.78rem;line-height:1.45;padding:10px 12px;border:1px solid var(--linha,rgba(0,0,0,.15));background:color-mix(in srgb,var(--fg) 4%,var(--card));max-height:40vh;overflow-y:auto}

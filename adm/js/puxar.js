@@ -3,7 +3,9 @@
 const LIMIAR = 80 // px of finger travel (after damping) needed before releasing reloads
 const MAX = 130
 
-export function ligarPuxar() {
+// aoAtualizar (opcional): chamado ao soltar; se devolver uma Promise, atualiza sem recarregar a página (com o ADM aberto,
+// recarregar pediria o Face ID de novo); se devolver null, recarrega a página como antes.
+export function ligarPuxar(aoAtualizar) {
   const ind = document.createElement('div')
   ind.className = 'puxar'
   ind.setAttribute('aria-hidden', 'true')
@@ -45,6 +47,12 @@ export function ligarPuxar() {
       recarregando = true
       ind.classList.add('carregando')
       txt.textContent = 'Atualizando…'
+      const p = aoAtualizar ? aoAtualizar() : null
+      if (p && typeof p.then === 'function') {
+        const fim = () => { recarregando = false; ind.classList.remove('carregando'); zerar() }
+        p.then(fim, fim)
+        return
+      }
       location.reload()
       return
     }

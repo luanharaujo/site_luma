@@ -1,6 +1,6 @@
-import { S } from './estado.js?v=5b3f7264df'
-import { ic, TELAS } from './icones.js?v=5b3f7264df'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=5b3f7264df'
+import { S } from './estado.js?v=c87da59460'
+import { ic, TELAS } from './icones.js?v=c87da59460'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=c87da59460'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -25,7 +25,7 @@ const mesAnterior = () => antMes(mesAberto())
 
 export function cab() {
   const r = S.resumo
-  return `<header class="cab"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><div class="cab-tit">Duo LuMa<small>Financeiro${r ? ' · ' + mesAno(r.mes_aberto) : ''}</small></div><span class="vivo"><i></i>atualizado ${S.atualizadoEm || ''}</span></header>`
+  return `<header class="cab"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><div class="cab-tit">Duo LuMa<small>Financeiro${r ? ' · ' + mesAno(r.mes_aberto) : ''}</small></div><span class="vivo"><i></i>atualizado ${S.atualizadoEm || ''}</span><button class="sair" data-acao="acesso" aria-label="Acesso: Face ID cadastrados e sair">Acesso</button></header>`
 }
 export function nav() {
   return `<nav class="nav" aria-label="Seções">${TELAS.map((t) => `<button class="nav-i ${S.tela === t.id ? 'ativo' : ''}" data-acao="ir" data-t="${t.id}">${ic(t.id)}<span>${t.nome}</span></button>`).join('')}</nav>`
