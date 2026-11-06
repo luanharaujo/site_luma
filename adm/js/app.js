@@ -1,15 +1,15 @@
-import { S } from './estado.js?v=ec110b4043'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=ec110b4043'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=ec110b4043'
-import { ic, TELAS } from './icones.js?v=ec110b4043'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=ec110b4043'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=ec110b4043'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=ec110b4043'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=ec110b4043'
-import { acoesIdeias, folhaIdeia, ligarRascunhos, ligarAoVivo, carregarIdeias } from './ideias.js?v=ec110b4043'
-import { iniciarAudio, ligarEnvios, retomarEnvios, acoesAudio } from './audio.js?v=ec110b4043'
-import { ligarPuxar } from './puxar.js?v=ec110b4043'
-import { conferirVersao } from './versao.js?v=ec110b4043'
+import { S } from './estado.js?v=47d287d395'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=47d287d395'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=47d287d395'
+import { ic, TELAS } from './icones.js?v=47d287d395'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=47d287d395'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=47d287d395'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=47d287d395'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=47d287d395'
+import { acoesIdeias, folhaIdeia, ligarRascunhos, ligarAoVivo, carregarIdeias } from './ideias.js?v=47d287d395'
+import { iniciarAudio, ligarEnvios, retomarEnvios, acoesAudio } from './audio.js?v=47d287d395'
+import { ligarPuxar } from './puxar.js?v=47d287d395'
+import { conferirVersao } from './versao.js?v=47d287d395'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -211,7 +211,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=ec110b4043')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=47d287d395')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()

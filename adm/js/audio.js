@@ -2,9 +2,9 @@
 // Port of treine-com-a-gente app/src/pages/ideiasEnvio.tsx + enviosGuardados.ts (vanilla, no framework).
 // The host re-renders by replacing innerHTML, so all state lives in module variables and live bits
 // (timer, waveform, progress bar) are updated by id.
-import { API, ErroApi, tokenSessao, urlApi } from './api.js?v=ec110b4043'
-import { esc } from './util.js?v=ec110b4043'
-import { ic } from './icones.js?v=ec110b4043'
+import { API, ErroApi, tokenSessao, urlApi } from './api.js?v=47d287d395'
+import { esc } from './util.js?v=47d287d395'
+import { ic } from './icones.js?v=47d287d395'
 
 const PARTE = 512 * 1024, PARADO_MS = 30000, ESPERA_MAX = 60000, MAX_SEG = 90 * 60
 const MIME_API = /^audio\/[a-z0-9.+-]+(;\s*codecs=[a-z0-9.,"-]+)?$/i

@@ -2,12 +2,12 @@
 // Três abas: Nova ideia (texto, áudio, nível, "Guardar como ideia" | "Mandar implementar"), Ideias (fluxograma das etapas que
 // filtra a lista, cards, folhas Mover e Nível, ação rápida nos chips) e Bastidores (bastidores.js). Regra de dinheiro: só o Luan,
 // com Face ID (proposito ideia:<id>). Este arquivo desenha e entrega as ações; app.js só liga as peças.
-import { S } from './estado.js?v=ec110b4043'
-import { ic } from './icones.js?v=ec110b4043'
-import { esc } from './util.js?v=ec110b4043'
-import { API, ErroApi, tokenSessao, urlApi } from './api.js?v=ec110b4043'
-import { telaBastidores, liberacaoNivel, pendenciaDaIdeia, htmlAvisoBugCritico } from './bastidores.js?v=ec110b4043'
-import { htmlGravador, gravacaoAtual, gravando, limparGravador, guardarNovaIdeia, htmlEnvios, htmlOuvir } from './audio.js?v=ec110b4043'
+import { S } from './estado.js?v=47d287d395'
+import { ic } from './icones.js?v=47d287d395'
+import { esc } from './util.js?v=47d287d395'
+import { API, ErroApi, tokenSessao, urlApi } from './api.js?v=47d287d395'
+import { telaBastidores, liberacaoNivel, pendenciaDaIdeia, htmlAvisoBugCritico } from './bastidores.js?v=47d287d395'
+import { htmlGravador, gravacaoAtual, gravando, limparGravador, guardarNovaIdeia, htmlEnvios, htmlOuvir } from './audio.js?v=47d287d395'
 
 const NIVEIS = [
   ['bug_critico', 'Bug crítico', 'bad'], ['bug', 'Bug', 'bad'], ['feature_urgente', 'Feature urgente', 'mari'],
@@ -411,7 +411,12 @@ export function ligarRascunhos(raiz, aoTrocarNivel) {
 // socket parado); reconexão 1 s, 2 s, 4 s... até 30 s enquanto a aba está visível; ao abrir, busca de novo (o que mudou offline).
 export function ligarAoVivo({ aoMudar, render }) {
   let ws = null, espera = 1000, tPing = 0, tPong = 0, tVolta = 0, ticks = 0, agendado = false
-  const quer = () => S.fase === 'ok' && S.tela === 'ideias' && document.visibilityState === 'visible' && !!tokenSessao()
+  // Security M1: each live reload calls the API with the session, which keeps it from idling out; after 30 min without a touch
+  // or a key, the tab stops listening and the 30-min idle rule of the session works again (a touch brings it back)
+  let mexeu = Date.now()
+  for (const ev of ['pointerdown', 'keydown', 'touchstart']) document.addEventListener(ev, () => { mexeu = Date.now() }, { passive: true, capture: true })
+  const parado = () => Date.now() - mexeu > 30 * 60e3
+  const quer = () => S.fase === 'ok' && S.tela === 'ideias' && document.visibilityState === 'visible' && !!tokenSessao() && !parado()
   const fecha = () => { clearInterval(tPing); clearTimeout(tPong); if (ws) { const w = ws; ws = null; try { w.close() } catch (e) { /* já fechado */ } } }
   const abre = () => {
     clearTimeout(tVolta); agendado = false
