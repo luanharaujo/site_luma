@@ -303,8 +303,17 @@ table.t th,table.t td{padding:6px 6px}
 .restrito .colar{display:grid;gap:8px;justify-items:center;margin-top:6px}
 .restrito .colar-campo{width:min(320px,86vw);padding:10px 12px;border:1px solid var(--ouro);border-radius:2px;background:rgba(255,255,255,.08);color:inherit;font:inherit;font-size:16px}
 .restrito .colar-campo::placeholder{color:inherit;opacity:.6}
-.restrito .entrar-auto{display:grid;gap:8px;justify-items:center}
 /* opção C: a tela inteira é o toque (cursor:pointer também faz o iPhone mandar o clique de qualquer ponto) */
 .restrito.entrar-toque{cursor:pointer;-webkit-tap-highlight-color:transparent}
-.restrito .acessar{font-family:var(--f-display);font-style:italic;font-size:1.35rem;color:var(--ouro);cursor:pointer}
+.restrito.entrar{padding-bottom:calc(72px + env(safe-area-inset-bottom,0px))}
+/* pedido do Luan (06/11 ~10h45): a entrada é só a mensagem; o campo do preenchimento automático fica por cima dela, transparente */
+.restrito .entrar-auto{position:relative;display:grid;justify-items:center;padding:24px 8px}
+.restrito .acessar{font-family:var(--f-display);font-style:italic;font-size:1.7rem;line-height:1.25;color:var(--ouro);max-width:15ch;margin:0;opacity:1}
+.restrito .entrar-campo{position:absolute;inset:0;width:100%;height:100%;margin:0;padding:0;border:0;border-radius:0;background:transparent;color:transparent;-webkit-text-fill-color:transparent;caret-color:transparent;font:inherit;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none;outline:none}
+.restrito .entrar-campo:disabled{pointer-events:none}
+.restrito .entrar-msg{font-size:.88rem}
+.restrito .entrar-diag{font-size:.66rem;opacity:.5}
+/* "Outras opções de login": pequeno, embaixo ("Abrir com Face ID" e colar o link de cadastro ficam lá) */
+.restrito .outras-botao{justify-self:center;border:0;background:none;color:inherit;font:inherit;font-size:.74rem;opacity:.65;text-decoration:underline;text-underline-offset:3px;padding:10px 14px;cursor:pointer}
+.restrito .outras-botao.fixo{position:fixed;left:50%;bottom:calc(10px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);white-space:nowrap}
 .restrito .colar-campo:disabled{opacity:.5}

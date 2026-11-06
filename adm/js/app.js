@@ -1,13 +1,13 @@
-import { S } from './estado.js?v=8dc1369de3'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=8dc1369de3'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=8dc1369de3'
-import { ic, TELAS } from './icones.js?v=8dc1369de3'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=8dc1369de3'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=8dc1369de3'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=8dc1369de3'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=8dc1369de3'
-import { ligarPuxar } from './puxar.js?v=8dc1369de3'
-import { conferirVersao } from './versao.js?v=8dc1369de3'
+import { S } from './estado.js?v=b7f6fb2a84'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=b7f6fb2a84'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=b7f6fb2a84'
+import { ic, TELAS } from './icones.js?v=b7f6fb2a84'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=b7f6fb2a84'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=b7f6fb2a84'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=b7f6fb2a84'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=b7f6fb2a84'
+import { ligarPuxar } from './puxar.js?v=b7f6fb2a84'
+import { conferirVersao } from './versao.js?v=b7f6fb2a84'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -72,7 +72,7 @@ const voltou = () => { if (document.visibilityState === 'hidden' || S.fase !== '
 /* ===== desenho ===== */
 function render() {
   if (S.fase === 'carregando') { raiz.innerHTML = '<p class="carregando">Abrindo…</p>'; return }
-  if (S.fase === 'entrar') { const colado = (document.getElementById('colar-link') || {}).value || ''; raiz.innerHTML = telaEntrar(); estilizar(raiz); if (colado) document.getElementById('colar-link').value = colado; return }
+  if (S.fase === 'entrar') { const el = document.getElementById('colar-link'); if (el) S.colado = el.value; raiz.innerHTML = telaEntrar(); estilizar(raiz); const novo = document.getElementById('colar-link'); if (novo && S.colado) novo.value = S.colado; return }
   if (S.fase === 'cadastro') { raiz.innerHTML = telaCadastro(); estilizar(raiz); return }
   if (S.fase === 'proibido') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Só o Luan e a Mari</h1><p>Seu login não dá acesso a esta área.</p><a class="btn" href="/">Voltar ao site</a></div>'; estilizar(raiz); return }
   if (S.fase === 'erro') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Sem conexão</h1><p>Não deu para conferir o login agora.</p><button class="btn" data-acao="de-novo">Tentar de novo</button></div>'; estilizar(raiz); return }
@@ -180,6 +180,7 @@ const ACOES = {
     return escreve(() => API.voto(d.id, d.v), 'Voto registrado.')
   },
   'entrar-faceid': () => entrarFaceId(),
+  outras: () => { S.outras = !S.outras; render() },
   'colar-link': () => colarLink(),
   cadastrar: () => cadastrarFaceId(),
   'cadastro-continuar': () => prepararCadastro(),
@@ -206,7 +207,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=8dc1369de3')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=b7f6fb2a84')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -254,38 +255,73 @@ const LOGO = '<a class="logo-link" href="/" aria-label="Página inicial do Duo L
 const NOMEP = { luan: 'Luan', mari: 'Mari' }
 const VALE_MS = 4 * 60e3 // o servidor dá 5 min para cada desafio; passou de 4, pede outro
 
-function telaEntrar() {
-  const pronto = (!!S.opEntrar || S.semRede) && !S.ocupado
-  // opção C do Luan (06/11): tocar em qualquer lugar da tela leva ao campo do preenchimento automático (e dali ao Face ID), com um texto
-  // que diz isso. B: o campo só fica ativo com o pedido da passkey já aberto (tocar antes fazia o iPhone oferecer senha comum).
-  const auto = S.preenche
-    ? `<div class="entrar-auto"><label class="acessar" id="entrar-acessar" for="entrar-campo">${S.condPronto ? 'Toque na tela para acessar' : 'Preparando o Face ID…'}</label>`
-      + `<input id="entrar-campo" class="colar-campo" type="text" name="username" autocomplete="username webauthn" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Acessar com Face ID" aria-label="Acessar com Face ID"${S.condPronto ? '' : ' disabled'}></div>`
-    : ''
-  return `<div class="restrito${S.preenche ? ' entrar-toque' : ''}">${LOGO}<h1>Financeiro</h1><p id="entrar-msg">${esc(S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.')}</p>`
-    + auto
-    + `<button class="btn${S.preenche ? ' sec' : ''}" data-acao="entrar-faceid"${pronto ? '' : ' disabled'}>${S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'}</button>`
-    + '<div class="colar"><p class="nota-login">Primeira vez neste aparelho? No WhatsApp, toque e segure o link de cadastro, copie e cole aqui:</p>'
-    + '<input id="colar-link" class="colar-campo" type="text" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Colar o link de cadastro" aria-label="Link de cadastro">'
-    + '<button class="btn sec" data-acao="colar-link">Cadastrar com este link</button></div></div>'
+// Pedidos do Luan (06/11 ~10h45): a tela é só a mensagem "Toque na tela para entrar com Face ID" e um botão pequeno embaixo para as
+// outras opções ("Abrir com Face ID" no modo normal e colar o link de cadastro). Opção C (06/11 ~08h): tocar em qualquer lugar leva ao
+// campo do preenchimento automático e dali ao Face ID; B: o campo só fica ativo com o pedido da passkey já aberto (tocar antes fazia o
+// iPhone oferecer senha comum). O campo fica por cima da mensagem, transparente: tocar nela já é tocar nele.
+function dicaEntrada() {
+  if (S.sozinho) return 'Abrindo o Face ID…'
+  if (S.ocupado) return 'Confirmando…'
+  if (S.preenche ? S.condPronto : !!S.opEntrar) return 'Toque na tela para entrar com Face ID'
+  return S.semRede ? 'Toque na tela para tentar de novo' : 'Preparando o Face ID…'
 }
-// Atualiza só a mensagem e o botão, sem redesenhar: redesenhar fecharia o teclado de quem já tocou no campo do Face ID.
+// o que aconteceu com o último Face ID sozinho (só nas outras opções): ajuda a entender o teste no iPhone
+const diagEntrada = () => 'Face ID sozinho ' + (S.diagSozinho || 'ao abrir: não chamado')
+function telaEntrar() {
+  const msg = `<p id="entrar-msg" class="entrar-msg"${S.msgLogin ? '' : ' hidden'}>${esc(S.msgLogin || '')}</p>`
+  if (S.outras) {
+    const pronto = (!!S.opEntrar || S.semRede) && !S.ocupado && !S.sozinho
+    return `<div class="restrito entrar">${LOGO}<h1>Financeiro</h1><p>Só o Luan e a Mari entram aqui, com o Face ID.</p>${msg}`
+      + `<button class="btn" data-acao="entrar-faceid"${pronto ? '' : ' disabled'}>${S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'}</button>`
+      + '<div class="colar"><p class="nota-login">Primeira vez neste aparelho? No WhatsApp, toque e segure o link de cadastro, copie e cole aqui:</p>'
+      + '<input id="colar-link" class="colar-campo" type="text" inputmode="url" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Colar o link de cadastro" aria-label="Link de cadastro">'
+      + '<button class="btn sec" data-acao="colar-link">Cadastrar com este link</button></div>'
+      + `<p class="nota-login entrar-diag" id="entrar-diag">${esc(diagEntrada())}</p>`
+      + '<button class="outras-botao" data-acao="outras">Voltar</button></div>'
+  }
+  const campo = S.preenche
+    ? `<input id="entrar-campo" class="entrar-campo" type="text" name="username" autocomplete="username webauthn" autocapitalize="off" autocorrect="off" spellcheck="false" aria-label="Entrar com Face ID"${S.condPronto ? '' : ' disabled'}>`
+    : ''
+  return `<div class="restrito entrar entrar-toque">${LOGO}<div class="entrar-auto"><p class="acessar" id="entrar-acessar">${esc(dicaEntrada())}</p>${campo}</div>${msg}`
+    + '<button class="outras-botao fixo" data-acao="outras">Outras opções de login</button></div>'
+}
+// Atualiza só os textos e o estado do campo e do botão, sem redesenhar: redesenhar fecharia o teclado de quem já tocou no campo do Face ID.
 function atualizaEntrada() {
   if (S.fase !== 'entrar') return
-  const b = raiz.querySelector('[data-acao=entrar-faceid]'), m = document.getElementById('entrar-msg')
-  if (!b || !m) { render(); return }
-  m.textContent = S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.'
-  const campo = document.getElementById('entrar-campo'), dica = document.getElementById('entrar-acessar')
+  const m = document.getElementById('entrar-msg'), campo = document.getElementById('entrar-campo')
+  // a tela desenhada não é a do estado (abriram ou fecharam as outras opções, o campo apareceu ou sumiu): aí redesenha
+  if (!m || !!document.getElementById('colar-link') !== !!S.outras || (!S.outras && !!campo !== !!S.preenche)) { render(); return }
+  m.textContent = S.msgLogin || ''; m.hidden = !S.msgLogin
   if (campo) campo.disabled = !S.condPronto
-  if (dica) dica.textContent = S.condPronto ? 'Toque na tela para acessar' : 'Preparando o Face ID…'
-  b.disabled = !((!!S.opEntrar || S.semRede) && !S.ocupado)
-  b.textContent = S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'
+  const dica = document.getElementById('entrar-acessar'); if (dica) dica.textContent = dicaEntrada()
+  const b = raiz.querySelector('[data-acao=entrar-faceid]')
+  if (b) { b.disabled = !((!!S.opEntrar || S.semRede) && !S.ocupado && !S.sozinho); b.textContent = S.ocupado ? 'Confirmando…' : 'Abrir com Face ID' }
+  const diag = document.getElementById('entrar-diag'); if (diag) diag.textContent = diagEntrada()
 }
-// Abre a tela de entrada: desenha, pede um desafio para o botão e deixa aberto o pedido do preenchimento automático.
-function abrirEntrada(msg = '') {
-  S.fase = 'entrar'; S.msgLogin = msg; S.ocupado = false; S.condPronto = false
+// Toque em qualquer lugar da tela de entrada (opção C): com o pedido do preenchimento aberto, leva ao campo (e dali ao Face ID); sem esse
+// modo (navegador sem ele) ou sem rede, faz o mesmo que o "Abrir com Face ID", ainda dentro do toque.
+function tocouNaEntrada() {
+  if (S.ocupado || S.sozinho) return
+  const campo = document.getElementById('entrar-campo')
+  if (S.preenche && S.condPronto && campo && !campo.disabled) { campo.focus(); return }
+  if (!S.preenche || S.semRede) entrarFaceId()
+}
+// Abre a tela de entrada: desenha, pede um desafio e tenta o Face ID sem toque quando a página acabou de abrir (abertura) ou quando o app
+// acabou de voltar ao primeiro plano (a sessão venceu com ele fechado); depois deixa aberto o pedido do preenchimento automático.
+function abrirEntrada(msg = '', abertura = false) {
+  S.fase = 'entrar'; S.msgLogin = msg; S.ocupado = false; S.condPronto = false; S.sozinho = false; S.outras = false
   render()
-  prepararEntrada().then(() => iniciarCondicional())
+  const origem = abertura ? 'abertura' : voltaArmada() ? 'volta' : ''
+  prepararEntrada().then(() => (origem ? entrarSozinho(origem).catch(() => false) : false)).then((chamou) => { if (!chamou) iniciarCondicional() })
+}
+// O app voltou ao primeiro plano (passou de escondido para visível): arma 1 Face ID sozinho por 15 s. Com a sessão aberta, nada aqui:
+// se ela venceu, o 401 dessa volta abre a entrada, que usa a volta armada. Já na entrada: desafio novo e a tentativa; se não chamar, o
+// preenchimento automático segue (ou volta, se tinha pausado com o app escondido).
+function voltouAoApp() {
+  voltaAte = Date.now() + VOLTA_MS
+  if (S.fase !== 'entrar' || S.ocupado || S.sozinho) return
+  S.condPausada = false
+  prepararEntrada().then(() => entrarSozinho('volta').catch(() => false)).then((chamou) => { if (!chamou) iniciarCondicional() })
 }
 // No app da tela de início do iPhone o link do WhatsApp abre no Safari, que não tem o login do /treinos: colando o link aqui, o
 // cadastro segue dentro do app, com o login que já está nele. Mesmo código e mesmas travas do servidor (uso único, telefone, Face ID).
@@ -295,6 +331,7 @@ function colarLink() {
   const m = /[#?&]cadastro=([A-Za-z0-9_-]{43})(?![A-Za-z0-9_-])/.exec(t) || /^([A-Za-z0-9_-]{43})$/.exec(t)
   if (!m) { S.msgLogin = 'Isso não parece o link de cadastro. No WhatsApp, toque e segure o link, toque em Copiar e cole aqui o link inteiro.'; atualizaEntrada(); return }
   if (campo) campo.value = ''
+  S.colado = ''
   if (S.condCtrl) { S.modalEmCurso = true; S.condCtrl.abort(); S.condCtrl = null } // o cadastro vai usar o WebAuthn
   S.convite = m[1]; S.msgLogin = ''; S.fase = 'cadastro'
   prepararCadastro()
@@ -302,7 +339,7 @@ function colarLink() {
 // Pede o desafio ANTES do toque: no iPhone o Face ID precisa ser chamado direto do toque, sem esperar a rede.
 async function prepararEntrada() {
   S.opEntrar = null; S.semRede = false
-  try { S.opEntrar = { op: await LOGIN.opcoesEntrar(), em: Date.now() } } catch (e) { S.semRede = true; S.msgLogin = e instanceof ErroApi && e.status ? e.message : 'Sem conexão com o servidor. Toque para tentar de novo.' }
+  try { S.opEntrar = { op: await LOGIN.opcoesEntrar(), em: Date.now() } } catch (e) { S.semRede = true; S.msgLogin = e instanceof ErroApi && e.status ? e.message : 'Sem conexão com o servidor.' }
   atualizaEntrada()
 }
 // Preenchimento automático (pedido do Luan, 05/11: sumir a folha "Continuar" do sistema antes do Face ID): o pedido fica aberto com a
@@ -321,10 +358,12 @@ async function iniciarCondicional() {
     S.condPronto = true; atualizaEntrada()
     r = await pedido
   } catch (e) {
-    S.condPronto = false; atualizaEntrada()
     clearTimeout(renovar)
-    if (S.condCtrl === ctrl) S.condCtrl = null
-    if (S.modalEmCurso || S.fase !== 'entrar') return // o botão ou o cadastro assumiram
+    // um pedido novo já começou (ex.: o Face ID sozinho da volta fechou este e falhou depressa): este, atrasado, não mexe na tela
+    if (S.condCtrl && S.condCtrl !== ctrl) return
+    S.condCtrl = null
+    S.condPronto = false; atualizaEntrada()
+    if (S.modalEmCurso || S.fase !== 'entrar') return // o botão, o Face ID sozinho ou o cadastro assumiram
     // o navegador recusou o modo na hora (diz que tem, mas não tem): fica só o botão, sem repetir pedidos ao servidor
     if (!ctrl.signal.aborted && (Date.now() - inicio < 3000 || ++S.condFalhas >= 3)) { S.preenche = false; render(); return }
     if (!ctrl.signal.aborted) { S.msgLogin = erroPasskey(e); atualizaEntrada() } // cancelou o Face ID depois de escolher
@@ -349,6 +388,7 @@ async function iniciarCondicional() {
 }
 // Botão de reserva (modo normal, com a folha do sistema): fecha o pedido do preenchimento e chama o Face ID ainda dentro do toque.
 async function entrarFaceId() {
+  if (S.sozinho || S.ocupado) return // o Face ID sozinho da abertura (ou outro pedido) ainda está na tela
   if (!suportaPasskey()) { S.msgLogin = 'Este navegador não tem Face ID para sites. Use o Safari ou o Chrome atualizados.'; atualizaEntrada(); return }
   if (!S.opEntrar || Date.now() - S.opEntrar.em > VALE_MS) { await prepararEntrada(); if (S.opEntrar) { S.msgLogin = 'Toque de novo para abrir.'; atualizaEntrada(); iniciarCondicional() } return } // voltou a rede: o toque na tela também volta
   const o = S.opEntrar.op
@@ -364,6 +404,59 @@ async function entrarFaceId() {
     S.modalEmCurso = false
     abrirEntrada(e instanceof ErroApi ? e.message : erroPasskey(e))
   }
+}
+// Face ID sozinho ao abrir (pedido do Luan, 06/11 ~10h45): o Face ID já aparece e ele só confirma. Toque simulado por script não serve
+// (o navegador não conta como toque); o que pode funcionar é chamar o modo normal ao abrir, que o WebKit deixou sem exigência de toque no
+// iOS 17.4 (a confirmar no iPhone do Luan; se ele recusar, sai NotAllowedError na hora e fica a tela "Toque na tela").
+// Condições da Segurança (06/11): (a) ao abrir, no máximo 1 chamada sozinha por carregamento da página; (b) nunca com o link de cadastro
+// no endereço nem com o colar link em curso (nem logo depois de Sair); (c) servidor e T1 iguais; (d) só com a página visível e com foco,
+// na hora da chamada. Cancelou, deu erro ou o iPhone recusou: fica a tela "Toque na tela", sem outra chamada sozinha.
+// Volta ao primeiro plano (liberada pela Segurança em 06/11, 2ª rodada): só a passagem de escondida para visível (visibilitychange) arma
+// 1 chamada, que vale por 15 s: sai na tela de entrada que já estava aberta ou na que abre porque a sessão venceu com o app fechado (o 401
+// daquela volta). Nada no focus nem no pageshow; nunca menos de 30 s depois da chamada sozinha anterior; o preenchimento automático
+// fecha antes e reabre se ela falhar.
+const VOLTA_MS = 15e3, ENTRE_SOZINHOS_MS = 30e3
+let sozinhoFeito = false, voltaAte = 0, ultimoSozinho = 0
+const voltaArmada = () => voltaAte > 0 && Date.now() <= voltaAte
+function motivoSozinho() {
+  const colar = document.getElementById('colar-link')
+  return !suportaPasskey() ? 'navegador sem passkey'
+    : S.fase !== 'entrar' || S.ocupado || S.sozinho ? 'outro pedido em curso'
+      : !S.opEntrar ? 'sem desafio do servidor'
+        : S.convite || /(^|[#&?])cadastro=/.test(location.hash) ? 'link de cadastro'
+          : S.outras || S.colado || (colar && colar.value) ? 'outras opções abertas'
+            : document.activeElement && document.activeElement.id === 'entrar-campo' ? 'campo do Face ID em uso'
+            : ultimoSozinho && Date.now() - ultimoSozinho < ENTRE_SOZINHOS_MS ? 'o anterior foi há menos de 30 s'
+              : document.visibilityState !== 'visible' ? 'página escondida'
+                : !document.hasFocus() ? 'página sem foco' : ''
+}
+// origem: 'abertura' (a página acabou de carregar) ou 'volta' (o app voltou ao primeiro plano). Devolve true se chamou o Face ID.
+async function entrarSozinho(origem) {
+  if (origem === 'abertura') { if (sozinhoFeito) return false; sozinhoFeito = true }
+  else { if (!voltaArmada()) return false; voltaAte = 0 } // 1 por volta, chamando ou não
+  const quando = origem === 'volta' ? 'na volta' : 'ao abrir'
+  const motivo = motivoSozinho()
+  if (motivo) { S.diagSozinho = `${quando}: não chamado (${motivo})`; atualizaEntrada(); return false }
+  if (S.condCtrl) { S.modalEmCurso = true; S.condCtrl.abort(); S.condCtrl = null } // o preenchimento fecha antes do modo normal
+  const o = S.opEntrar.op
+  S.opEntrar = null; S.sozinho = true; S.condPronto = false; ultimoSozinho = Date.now(); S.diagSozinho = `${quando}: chamado`; atualizaEntrada()
+  const inicio = Date.now()
+  let r
+  try { r = await usarPasskey(o) } catch (e) {
+    S.sozinho = false
+    S.diagSozinho = `${quando}: cancelado ou recusado em ${((Date.now() - inicio) / 1000).toFixed(1).replace('.', ',')} s (${(e && e.name) || 'erro'})`
+    abrirEntrada('') // a tela de sempre, com o preenchimento reaberto e sem mensagem de erro: pode ter sido só o iPhone pedindo um toque
+    return true
+  }
+  S.sozinho = false; S.ocupado = true; S.diagSozinho = `${quando}: entrou`; atualizaEntrada()
+  try {
+    const s = await LOGIN.entrar(r)
+    defineSessao(s.sessao); S.msgLogin = ''; S.ocupado = false
+    await abrirComSessao()
+  } catch (e) {
+    abrirEntrada(e instanceof ErroApi ? e.message : erroPasskey(e))
+  }
+  return true
 }
 async function abrirComSessao() {
   try {
@@ -508,17 +601,18 @@ async function iniciarSessao() {
   if (aprovar && /^regras:[0-9a-f]{40}$/.test(aprovar)) S.pedido = { proposito: aprovar, texto: q.get('texto') || '' }
   if (temSessao()) { S.fase = 'carregando'; render(); return abrirComSessao() } // só a prévia local entra assim
   S.preenche = await suportaPreenchimento(); S.condFalhas = 0
-  abrirEntrada('')
+  // logo depois de Sair a página recarrega com ?saiu=: sem Face ID sozinho. O ?saiu= sai do endereço (o app pode reabrir nele depois).
+  const u = new URL(location.href), saiu = u.searchParams.has('saiu')
+  if (saiu) { u.searchParams.delete('saiu'); history.replaceState(null, '', u.pathname + u.search + u.hash); S.diagSozinho = 'ao abrir: não chamado (acabou de sair)' }
+  abrirEntrada('', !saiu)
 }
 
 function iniciar() {
   app.style.setProperty('--gl-verde', guilloche('#1f5a3c', 720, 420))
   app.style.setProperty('--gl-ouro', guilloche('#e2c56f', 720, 220))
   app.addEventListener('click', (e) => {
-    if (S.fase === 'entrar' && S.preenche && S.condPronto && !e.target.closest('a, button, input, label, .colar')) {
-      const campo = document.getElementById('entrar-campo')
-      if (campo && !campo.disabled) { campo.focus(); return }
-    }
+    // opção C: na tela de entrada (sem as outras opções abertas), tocar em qualquer lugar que não seja link, botão ou campo leva ao Face ID
+    if (S.fase === 'entrar' && !S.outras && !e.target.closest('a, button, input, label')) { tocouNaEntrada(); return }
     if (e.target.classList && e.target.classList.contains('folha-fundo')) { S.folha = null; render(); return }
     const b = e.target.closest('[data-acao]'); if (!b || !app.contains(b)) return
     const f = ACOES[b.dataset.acao]; if (f) f(b.dataset, b)
@@ -530,11 +624,13 @@ function iniciar() {
   // com a sessão aberta, puxar para atualizar só recarrega os dados (recarregar a página pediria o Face ID de novo, trava T1)
   ligarPuxar(() => (S.fase === 'ok' ? Promise.all([aoMudar('puxar'), conferirVersao()]) : null))
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conferirVersao() })
-  // retoma o preenchimento automático pausado com a aba escondida (desafio novo, pedido novo)
+  // volta ao primeiro plano: só a passagem de escondida para visível conta (Face ID sozinho da volta e o preenchimento pausado)
+  let escondida = document.visibilityState === 'hidden'
   document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible' || !S.condPausada || S.fase !== 'entrar') return
-    S.condPausada = false
-    prepararEntrada().then(() => iniciarCondicional())
+    if (document.visibilityState !== 'visible') { escondida = true; return }
+    if (!escondida) return
+    escondida = false
+    voltouAoApp()
   })
   // primeiro a versão (pode reabrir a página com o mesmo #cadastro=...), depois o login
   conferirVersao().then((reabrindo) => { if (!reabrindo) iniciarSessao() })
