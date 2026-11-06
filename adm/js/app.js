@@ -1,14 +1,14 @@
-import { S } from './estado.js?v=b98bcbb64f'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=b98bcbb64f'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=b98bcbb64f'
-import { ic, TELAS } from './icones.js?v=b98bcbb64f'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=b98bcbb64f'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=b98bcbb64f'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=b98bcbb64f'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=b98bcbb64f'
-import { acoesIdeias, folhaIdeia, ligarRascunhos } from './ideias.js?v=b98bcbb64f'
-import { ligarPuxar } from './puxar.js?v=b98bcbb64f'
-import { conferirVersao } from './versao.js?v=b98bcbb64f'
+import { S } from './estado.js?v=3b99968d59'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=3b99968d59'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=3b99968d59'
+import { ic, TELAS } from './icones.js?v=3b99968d59'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=3b99968d59'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=3b99968d59'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=3b99968d59'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=3b99968d59'
+import { acoesIdeias, folhaIdeia, ligarRascunhos } from './ideias.js?v=3b99968d59'
+import { ligarPuxar } from './puxar.js?v=3b99968d59'
+import { conferirVersao } from './versao.js?v=3b99968d59'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -210,7 +210,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=b98bcbb64f')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=3b99968d59')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()

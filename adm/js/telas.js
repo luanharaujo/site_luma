@@ -1,7 +1,7 @@
-import { S } from './estado.js?v=b98bcbb64f'
-import { ic, TELAS } from './icones.js?v=b98bcbb64f'
-import { telaIdeias } from './ideias.js?v=b98bcbb64f'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=b98bcbb64f'
+import { S } from './estado.js?v=3b99968d59'
+import { ic, TELAS } from './icones.js?v=3b99968d59'
+import { telaIdeias } from './ideias.js?v=3b99968d59'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=3b99968d59'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -194,10 +194,12 @@ function telaImpostos(r) {
     const dono = (i) => (i.dono === 'duo' ? 'Duo (antes da divisão)' : NOME[i.dono])
     return `<div class="bloco-linha"><div class="linha"><span><b>Dia ${dm(v.vence)}</b> · impostos de ${nomeMes(v.competencia)}</span><span class="r">${brl(v.valor)}</span></div>
       ${v.falta ? chip('warn', 'falta guardar ' + brl(v.falta)) : chip('ok', 'guardado na caixinha Impostos')}
-      <div class="linhas">${das.length ? linha('DAS ' + (guia ? '(guia do contador)' : '(estimado)'), brl(soma(das, (i) => i.valor))) : ''}${das.map((i) => linha(`${i.nota_id ? 'NF ' + esc(String(i.nota_id).replace(/^nf-/i, '')) + ' · ' : ''}${dono(i)}`, brl(i.valor), 'sub')).join('')}
+      <div class="linhas">${das.length ? linha('DAS ' + (guia ? '(guia do contador)' : '(estimado)'), brl(soma(das, (i) => i.valor))) : ''}${das.map((i) => linha(`${i.nota_id ? 'NF ' + esc(String(i.nota_id).replace(/^nf-/i, '')) + ' · ' : ''}${dono(i)}${i.anexo ? ` · ${guia ? 'Anexo ' + esc(i.anexo) : `Anexo ${esc(i.anexo)}, ${pct(i.aliquota, 1)}`}` : ''}`, brl(i.valor), 'sub')).join('')}
       ${inss.length ? linha('INSS do pró-labore', brl(soma(inss, (i) => i.valor))) + inss.map((i) => linha(NOME[i.dono], brl(i.valor), 'sub')).join('') : ''}
       ${irrf.length ? linha('IRRF', brl(soma(irrf, (i) => i.valor))) : ''}</div></div>`
   }).join('')
+  const prev = (r.previsoes || []).map((x) => `<div class="bloco-linha"><div class="linha"><span><b>Dia ${dm(x.vence)}</b> · ${x.tipo === 'inss' ? 'INSS' : 'IRRF'} do pró-labore de ${nomeMes(x.competencia)}</span><span class="r">${brl(x.valor)}</span></div>
+      ${chip('info', 'previsão')}<div class="linhas">${linha(NOME[x.dono] + (x.tipo === 'inss' ? ' · 11% de ' + brl(x.base) + ' (pró-labore planejado)' : ''), brl(x.valor), 'sub')}</div></div>`).join('')
   const futuros = (r.a_receber || []).filter((x) => x.imposto).map((x) => `<p class="nota">Quando a NF ${esc(x.numero || x.nota_id)} for paga: + ${brl(x.imposto)} de imposto para guardar.</p>`).join('')
   const rs = r.reservas || []
   const porPessoa = `<div class="tabela-wrap"><table class="t"><thead><tr><th>Quem</th>${rs.map((v) => `<th>${dm(v.vence)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${['luan', 'mari', 'duo'].map((p) => `<tr><td>${p === 'duo' ? 'Duo' : NOME[p]}</td>${rs.map((v) => `<td class="n">${brl(soma((v.itens || []).filter((i) => i.dono === p), (i) => i.valor))}</td>`).join('')}<td class="n">${brl(soma(rs, (v) => soma((v.itens || []).filter((i) => i.dono === p), (i) => i.valor)))}</td></tr>`).join('')}</tbody></table></div>`
@@ -207,6 +209,7 @@ function telaImpostos(r) {
   const ano = r.mes_aberto.slice(0, 4), cs = Object.keys(r.meses || {}).filter((c) => c.startsWith(ano))
   const li = r.lucro_isento
   return sec('Reservas para os próximos dias 20', blocos + futuros || '<p class="nota">Nada a reservar.</p>')
+    + (prev ? sec('Previsão (pró-labore ainda não pago)', prev + '<p class="nota">Ainda não é reserva: vira imposto a guardar quando o pró-labore for pago. O valor pode mudar se o pró-labore mudar.</p>') : '')
     + sec('Por pessoa', porPessoa + '<p class="nota">Cada um guarda o imposto das notas que trouxe e o INSS do próprio pró-labore. O DAS da nota do Duo sai antes da divisão.</p>')
     + (f.limite !== undefined ? sec('Fator R', `<div class="medidor"><div class="linha"><span>Pró-labore ÷ receita, últimos 12 meses</span><span class="r tit-num">${f.razao === null || f.razao === undefined ? '—' : pct(f.razao)}</span></div>
         <div class="barra"><span data-w="${larg.toFixed(1)}"></span><em data-left="${((f.limite || 0.28) / 0.4 * 100).toFixed(1)}"></em></div><div class="esc"><span>0%</span><span>${pct(f.limite || 0.28, 0)} (limite)</span><span>40%</span></div></div>

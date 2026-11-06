@@ -1,8 +1,8 @@
 // Aba Ideias: fila de ideias e pedidos de mudança do site (contrato em api/IDEIAS.md).
 // Este arquivo desenha a tela e a folha de "Nova ideia" e entrega as ações; app.js só liga as peças (acoesIdeias).
-import { S } from './estado.js?v=b98bcbb64f'
-import { ic } from './icones.js?v=b98bcbb64f'
-import { esc } from './util.js?v=b98bcbb64f'
+import { S } from './estado.js?v=3b99968d59'
+import { ic } from './icones.js?v=3b99968d59'
+import { esc } from './util.js?v=3b99968d59'
 
 const NIVEIS = [
   ['bug_critico', 'Bug crítico', 'bad'], ['bug', 'Bug', 'warn'], ['feature_urgente', 'Feature urgente', 'warn'],
