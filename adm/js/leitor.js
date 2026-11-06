@@ -1,5 +1,5 @@
 // Lê o arquivo escolhido no "Lançar": XML de NFS-e (no navegador), PDF (pdf.js, só quando precisa) ou foto (só anexa).
-import { hojeIso } from './util.js?v=ca4851692a'
+import { hojeIso } from './util.js?v=645c1d4b31'
 
 const cents = (t) => { const v = parseFloat(String(t).replace(/\./g, '').replace(',', '.')); return isFinite(v) ? Math.round(v * 100) : 0 }
 const centsPonto = (t) => { const s = String(t).trim(); const v = s.includes(',') ? parseFloat(s.replace(/\./g, '').replace(',', '.')) : parseFloat(s); return isFinite(v) ? Math.round(v * 100) : 0 }

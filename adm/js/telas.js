@@ -1,6 +1,6 @@
-import { S } from './estado.js?v=ca4851692a'
-import { ic, TELAS } from './icones.js?v=ca4851692a'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=ca4851692a'
+import { S } from './estado.js?v=645c1d4b31'
+import { ic, TELAS } from './icones.js?v=645c1d4b31'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=645c1d4b31'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -125,9 +125,12 @@ function telaOnde(r) {
   }).join('')
   const bar = barra(contas.filter((c) => c.saldo > 0).map((c) => [100 * c.saldo / (r.total || 1), donoDaConta(c) ? COR[donoDaConta(c)] : 'var(--muted)']))
   const arr = r.arrumar || []
-  const mov = arr.length ? `<div class="linhas">${arr.map((m) => `<div class="mov">${ic('setas')}<span>Mover <b class="num">${brl(m.valor)}</b> de ${esc(nomeDe(m.de))} para ${esc(nomeDe(m.para))}</span></div>`).join('')}</div>
+  const falta = Number(r.arrumar_falta) || 0
+  // the API only suggests what the main account holds; the rest has to come in as a partner's contribution
+  const aviso = falta > 0 ? `<p>${chip('warn', 'falta dinheiro')} ${arr.length ? 'Mesmo depois disso, faltam' : 'Faltam'} <b class="num">${brl(falta)}</b> na conta para completar as caixinhas. Esse dinheiro precisa entrar na empresa como aporte de um sócio (veja quem está com disponível negativo em "De quem é").</p>` : ''
+  const mov = arr.length ? `<div class="linhas">${arr.map((m) => `<div class="mov">${ic('setas')}<span>Mover <b class="num">${brl(m.valor)}</b> de ${esc(nomeDe(m.de))} para ${esc(nomeDe(m.para))}</span></div>`).join('')}</div>${aviso}
       <div class="btns"><button class="btn pri" data-acao="arrumar">Fiz as transferências no banco</button></div><p class="nota">O sistema não mexe no banco: ele diz o que mover, vocês fazem no app do banco e confirmam aqui.</p>`
-    : `<p>${chip('ok', 'tudo no lugar')} Cada caixinha tem exatamente o que é do dono dela.</p>`
+    : aviso || `<p>${chip('ok', 'tudo no lugar')} Cada caixinha tem exatamente o que é do dono dela.</p>`
   return sec('Onde está o dinheiro', `${bar}<div class="linhas">${corpo}</div>${linha('Total', brl(r.total), 'tot')}`, irBtn('quem', 'De quem é'))
     + sec('Arrumar as caixinhas', mov)
     + sec('Bate?', `<div class="linhas">${linha('Onde está (contas)', brl(r.total))}${linha('De quem é (Luan + Mari + Caixa + Impostos + a decidir)', brl(r.soma_donos))}${linha('Diferença', brl(r.total - r.soma_donos), 'tot')}</div>${r.bate ? chip('ok', 'bate') : chip('bad', 'não bate')}`)

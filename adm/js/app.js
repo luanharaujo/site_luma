@@ -1,13 +1,13 @@
-import { S } from './estado.js?v=ca4851692a'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=ca4851692a'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=ca4851692a'
-import { ic, TELAS } from './icones.js?v=ca4851692a'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=ca4851692a'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=ca4851692a'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=ca4851692a'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=ca4851692a'
-import { ligarPuxar } from './puxar.js?v=ca4851692a'
-import { conferirVersao } from './versao.js?v=ca4851692a'
+import { S } from './estado.js?v=645c1d4b31'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=645c1d4b31'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=645c1d4b31'
+import { ic, TELAS } from './icones.js?v=645c1d4b31'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=645c1d4b31'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=645c1d4b31'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=645c1d4b31'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=645c1d4b31'
+import { ligarPuxar } from './puxar.js?v=645c1d4b31'
+import { conferirVersao } from './versao.js?v=645c1d4b31'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -206,7 +206,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=ca4851692a')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=645c1d4b31')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
