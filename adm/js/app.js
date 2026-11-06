@@ -1,13 +1,13 @@
-import { S } from './estado.js?v=645c1d4b31'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=645c1d4b31'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=645c1d4b31'
-import { ic, TELAS } from './icones.js?v=645c1d4b31'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=645c1d4b31'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=645c1d4b31'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=645c1d4b31'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=645c1d4b31'
-import { ligarPuxar } from './puxar.js?v=645c1d4b31'
-import { conferirVersao } from './versao.js?v=645c1d4b31'
+import { S } from './estado.js?v=8dc1369de3'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=8dc1369de3'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=8dc1369de3'
+import { ic, TELAS } from './icones.js?v=8dc1369de3'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=8dc1369de3'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=8dc1369de3'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=8dc1369de3'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=8dc1369de3'
+import { ligarPuxar } from './puxar.js?v=8dc1369de3'
+import { conferirVersao } from './versao.js?v=8dc1369de3'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -206,7 +206,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=645c1d4b31')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=8dc1369de3')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -256,11 +256,13 @@ const VALE_MS = 4 * 60e3 // o servidor dá 5 min para cada desafio; passou de 4,
 
 function telaEntrar() {
   const pronto = (!!S.opEntrar || S.semRede) && !S.ocupado
+  // opção C do Luan (06/11): tocar em qualquer lugar da tela leva ao campo do preenchimento automático (e dali ao Face ID), com um texto
+  // que diz isso. B: o campo só fica ativo com o pedido da passkey já aberto (tocar antes fazia o iPhone oferecer senha comum).
   const auto = S.preenche
-    ? '<div class="entrar-auto"><label class="nota-login" for="entrar-campo">Toque no campo e escolha o Face ID na barra acima do teclado:</label>'
-      + '<input id="entrar-campo" class="colar-campo" type="text" name="username" autocomplete="username webauthn" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Entrar com Face ID" aria-label="Entrar com Face ID"></div>'
+    ? `<div class="entrar-auto"><label class="acessar" id="entrar-acessar" for="entrar-campo">${S.condPronto ? 'Toque na tela para acessar' : 'Preparando o Face ID…'}</label>`
+      + `<input id="entrar-campo" class="colar-campo" type="text" name="username" autocomplete="username webauthn" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Acessar com Face ID" aria-label="Acessar com Face ID"${S.condPronto ? '' : ' disabled'}></div>`
     : ''
-  return `<div class="restrito">${LOGO}<h1>Financeiro</h1><p id="entrar-msg">${esc(S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.')}</p>`
+  return `<div class="restrito${S.preenche ? ' entrar-toque' : ''}">${LOGO}<h1>Financeiro</h1><p id="entrar-msg">${esc(S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.')}</p>`
     + auto
     + `<button class="btn${S.preenche ? ' sec' : ''}" data-acao="entrar-faceid"${pronto ? '' : ' disabled'}>${S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'}</button>`
     + '<div class="colar"><p class="nota-login">Primeira vez neste aparelho? No WhatsApp, toque e segure o link de cadastro, copie e cole aqui:</p>'
@@ -273,12 +275,15 @@ function atualizaEntrada() {
   const b = raiz.querySelector('[data-acao=entrar-faceid]'), m = document.getElementById('entrar-msg')
   if (!b || !m) { render(); return }
   m.textContent = S.msgLogin || 'Só o Luan e a Mari entram aqui, com o Face ID.'
+  const campo = document.getElementById('entrar-campo'), dica = document.getElementById('entrar-acessar')
+  if (campo) campo.disabled = !S.condPronto
+  if (dica) dica.textContent = S.condPronto ? 'Toque na tela para acessar' : 'Preparando o Face ID…'
   b.disabled = !((!!S.opEntrar || S.semRede) && !S.ocupado)
   b.textContent = S.ocupado ? 'Confirmando…' : 'Abrir com Face ID'
 }
 // Abre a tela de entrada: desenha, pede um desafio para o botão e deixa aberto o pedido do preenchimento automático.
 function abrirEntrada(msg = '') {
-  S.fase = 'entrar'; S.msgLogin = msg; S.ocupado = false
+  S.fase = 'entrar'; S.msgLogin = msg; S.ocupado = false; S.condPronto = false
   render()
   prepararEntrada().then(() => iniciarCondicional())
 }
@@ -312,8 +317,11 @@ async function iniciarCondicional() {
   prepararEntrada() // o botão de reserva ganha um desafio próprio
   let r
   try {
-    r = await usarPasskey(o, { condicional: true, signal: ctrl.signal })
+    const pedido = usarPasskey(o, { condicional: true, signal: ctrl.signal }) // navigator.credentials.get já saiu: o pedido está aberto
+    S.condPronto = true; atualizaEntrada()
+    r = await pedido
   } catch (e) {
+    S.condPronto = false; atualizaEntrada()
     clearTimeout(renovar)
     if (S.condCtrl === ctrl) S.condCtrl = null
     if (S.modalEmCurso || S.fase !== 'entrar') return // o botão ou o cadastro assumiram
@@ -328,7 +336,7 @@ async function iniciarCondicional() {
   }
   clearTimeout(renovar)
   if (S.condCtrl === ctrl) S.condCtrl = null
-  S.ocupado = true; atualizaEntrada()
+  S.condPronto = false; S.ocupado = true; atualizaEntrada()
   try {
     const s = await LOGIN.entrar(r)
     defineSessao(s.sessao); S.msgLogin = ''; S.ocupado = false; S.condFalhas = 0
@@ -342,7 +350,7 @@ async function iniciarCondicional() {
 // Botão de reserva (modo normal, com a folha do sistema): fecha o pedido do preenchimento e chama o Face ID ainda dentro do toque.
 async function entrarFaceId() {
   if (!suportaPasskey()) { S.msgLogin = 'Este navegador não tem Face ID para sites. Use o Safari ou o Chrome atualizados.'; atualizaEntrada(); return }
-  if (!S.opEntrar || Date.now() - S.opEntrar.em > VALE_MS) { await prepararEntrada(); if (S.opEntrar) { S.msgLogin = 'Toque de novo para abrir.'; atualizaEntrada() } return }
+  if (!S.opEntrar || Date.now() - S.opEntrar.em > VALE_MS) { await prepararEntrada(); if (S.opEntrar) { S.msgLogin = 'Toque de novo para abrir.'; atualizaEntrada(); iniciarCondicional() } return } // voltou a rede: o toque na tela também volta
   const o = S.opEntrar.op
   S.opEntrar = null; S.ocupado = true
   if (S.condCtrl) { S.modalEmCurso = true; S.condCtrl.abort(); S.condCtrl = null }
@@ -507,6 +515,10 @@ function iniciar() {
   app.style.setProperty('--gl-verde', guilloche('#1f5a3c', 720, 420))
   app.style.setProperty('--gl-ouro', guilloche('#e2c56f', 720, 220))
   app.addEventListener('click', (e) => {
+    if (S.fase === 'entrar' && S.preenche && S.condPronto && !e.target.closest('a, button, input, label, .colar')) {
+      const campo = document.getElementById('entrar-campo')
+      if (campo && !campo.disabled) { campo.focus(); return }
+    }
     if (e.target.classList && e.target.classList.contains('folha-fundo')) { S.folha = null; render(); return }
     const b = e.target.closest('[data-acao]'); if (!b || !app.contains(b)) return
     const f = ACOES[b.dataset.acao]; if (f) f(b.dataset, b)
