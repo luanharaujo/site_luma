@@ -5,6 +5,9 @@ const cfg = () => window.ADM_CONFIG
 export class ErroApi extends Error { constructor(status, msg) { super(msg); this.status = status } }
 let sessao = (cfg() && cfg().previaSessao) || null // previaSessao: só na prévia local com a API de mentira
 export const temSessao = () => !!sessao
+// For the audio parts (raw base64 text, XHR with progress) and the ideas WebSocket: the token never leaves this page.
+export const tokenSessao = () => sessao
+export const urlApi = () => cfg().api.replace(/\/+$/, '')
 export const defineSessao = (t) => { sessao = t || null }
 export const tokenTreinos = () => { try { return localStorage.getItem('luma_token') } catch (e) { return null } }
 
@@ -56,6 +59,11 @@ export const API = {
   comentaIdeia: (id, texto) => chama('POST', `/ideias/${encodeURIComponent(id)}/comentarios`, { texto }),
   agoraIdeia: (id, b) => chama('POST', `/ideias/${encodeURIComponent(id)}/agora`, b),
   jaFizIdeia: (id) => chama('POST', `/ideias/${encodeURIComponent(id)}/ja-fiz`, {}),
+  ideiaPorChave: (chave) => chama('GET', `/ideias/chave/${encodeURIComponent(chave)}`),
+  audioIniciar: (id, mime) => chama('POST', `/ideias/${encodeURIComponent(id)}/audio/iniciar`, { mime }),
+  audioPartes: (id) => chama('GET', `/ideias/${encodeURIComponent(id)}/audio/partes`),
+  audioFinalizar: (id, b) => chama('POST', `/ideias/${encodeURIComponent(id)}/audio/finalizar`, b),
+  bastidores: () => chama('GET', '/bastidores'),
   anexo: (arquivo, refTipo, refId) => chama('POST', '/anexos' + q({ ref_tipo: refTipo, ref_id: refId }), arquivo, { headers: { 'Content-Type': arquivo.type, 'X-Nome': encodeURIComponent(arquivo.name || 'anexo') } }),
 }
 

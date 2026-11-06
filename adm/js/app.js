@@ -1,14 +1,15 @@
-import { S } from './estado.js?v=3b99968d59'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=3b99968d59'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=3b99968d59'
-import { ic, TELAS } from './icones.js?v=3b99968d59'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=3b99968d59'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=3b99968d59'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=3b99968d59'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=3b99968d59'
-import { acoesIdeias, folhaIdeia, ligarRascunhos } from './ideias.js?v=3b99968d59'
-import { ligarPuxar } from './puxar.js?v=3b99968d59'
-import { conferirVersao } from './versao.js?v=3b99968d59'
+import { S } from './estado.js?v=ec110b4043'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=ec110b4043'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=ec110b4043'
+import { ic, TELAS } from './icones.js?v=ec110b4043'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=ec110b4043'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=ec110b4043'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=ec110b4043'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=ec110b4043'
+import { acoesIdeias, folhaIdeia, ligarRascunhos, ligarAoVivo, carregarIdeias } from './ideias.js?v=ec110b4043'
+import { iniciarAudio, ligarEnvios, retomarEnvios, acoesAudio } from './audio.js?v=ec110b4043'
+import { ligarPuxar } from './puxar.js?v=ec110b4043'
+import { conferirVersao } from './versao.js?v=ec110b4043'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -44,7 +45,7 @@ async function carregar() {
   if (t === 'livro') { const c = S.filtro.mes === 'aberto' ? a : S.filtro.mes === 'anterior' ? ant : ''; extra.push(API.lancamentos(c).then((x) => { S.livro = { itens: lista(x, 'lancamentos') } })) }
   if (t === 'contabil') extra.push(API.mes(S.contMes).then((x) => { S.mesDados = x }))
   if (t === 'excel') { S.erroExcel = ''; extra.push(API.excel(S.excelMes).then((x) => { S.excel = x }).catch((e) => { S.excel = null; S.erroExcel = msgErro(e) })) }
-  if (t === 'ideias') extra.push(API.ideias().then((x) => { S.ideias = lista(x, 'ideias'); S.erroIdeias = '' }).catch((e) => { if (e instanceof ErroApi && e.status === 401) throw e; S.erroIdeias = msgErro(e) }))
+  if (t === 'ideias') extra.push(carregarIdeias(lista, msgErro))
   if (t === 'certidoes') extra.push(API.certidoes().then((x) => { S.cert = lista(x, 'certidoes') }))
   await Promise.all(extra)
   if (meu !== seq) return
@@ -79,7 +80,7 @@ function render() {
   if (S.fase === 'proibido') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Só o Luan e a Mari</h1><p>Seu login não dá acesso a esta área.</p><a class="btn" href="/">Voltar ao site</a></div>'; estilizar(raiz); return }
   if (S.fase === 'erro') { raiz.innerHTML = '<div class="restrito"><a class="logo-link" href="/" aria-label="Página inicial do Duo LuMa"><span class="logo"></span></a><h1>Sem conexão</h1><p>Não deu para conferir o login agora.</p><button class="btn" data-acao="de-novo">Tentar de novo</button></div>'; estilizar(raiz); return }
   if (S.folha && S.folha.passo === 'campos' && document.querySelector('.folha input:focus')) return
-  if (document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea[data-rasc]')) return // digitando uma ideia ou comentário: não redesenha por cima
+  if (document.activeElement && document.activeElement.matches && document.activeElement.matches('textarea[data-rasc], input[data-rasc]')) return // digitando uma ideia, título ou comentário: não redesenha por cima
   const tela = document.getElementById('tela')
   const keep = tela && raiz.dataset.tela === S.tela ? tela.scrollTop : 0
   const folhaScroll = document.querySelector('.folha') ? document.querySelector('.folha').scrollTop : 0
@@ -210,7 +211,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=3b99968d59')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=ec110b4043')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()
@@ -470,6 +471,8 @@ async function abrirComSessao() {
     S.fase = e instanceof ErroApi && e.status === 403 ? 'proibido' : 'erro'; render(); return
   }
   S.fase = 'ok'; S.tela = hashTela(); render()
+  // ideias com áudio guardadas no aparelho: o envio de fundo (audio.js) volta a andar com a sessão nova
+  ligarEnvios({ aoChegar: () => aoMudar('escrita') }); retomarEnvios()
   await recarrega()
   if (S.pedido && S.fase === 'ok') { const p = S.pedido; S.pedido = null; abrirAprovacao(p.proposito, p.texto) }
 }
@@ -519,7 +522,7 @@ async function cadastrarFaceId() {
   render()
 }
 
-Object.assign(ACOES, acoesIdeias({ render, toast, escreve, aoMudar, abrirAprovacao, msgErro, tratarLogin, API }))
+Object.assign(ACOES, acoesIdeias({ render, toast, escreve, aoMudar, abrirAprovacao, msgErro, tratarLogin, API }), acoesAudio({ toast, render }))
 
 /* ===== aprovação assinada com Face ID (T5): voto em regra de dinheiro; deploy que muda as regras (link do deploy.sh) ===== */
 function folhaAprovar() {
@@ -622,7 +625,11 @@ function iniciar() {
     const b = e.target.closest('[data-acao]'); if (!b || !app.contains(b)) return
     const f = ACOES[b.dataset.acao]; if (f) f(b.dataset, b)
   })
-  ligarRascunhos(app)
+  ligarRascunhos(app, render)
+  iniciarAudio({ aoMudar: render })
+  ligarAoVivo({ aoMudar, render })
+  // caixas do fluxograma (role=button): Enter ou espaço fazem o mesmo que tocar
+  app.addEventListener('keydown', (e) => { const b = e.target.closest && e.target.closest('[role=button][data-acao]'); if (!b || (e.key !== 'Enter' && e.key !== ' ')) return; e.preventDefault(); const f = ACOES[b.dataset.acao]; if (f) f(b.dataset, b) })
   document.getElementById('arq').addEventListener('change', arquivoEscolhido)
   window.addEventListener('hashchange', () => { if (S.fase !== 'ok') return; S.tela = hashTela(); S.folha = null; render(); recarrega(); const t = document.getElementById('tela'); if (t) t.scrollTop = 0 })
   document.addEventListener('visibilitychange', voltou)

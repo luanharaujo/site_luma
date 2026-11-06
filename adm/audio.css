@@ -1,0 +1,29 @@
+/* Idea audio: recorder, sending lines, player. Colors only from the Passaporte tokens. */
+.aud-box{display:grid;gap:8px;border:1px solid var(--line2);background:color-mix(in srgb,var(--card) 70%,#fff);padding:10px 12px}
+.aud-box audio,.aud-player{width:100%}
+.aud-player{margin-top:8px}
+.aud-grav{border-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--card))}
+.aud-linha{display:flex;align-items:center;gap:10px}
+.aud-ponto{width:11px;height:11px;flex:none;border-radius:50%;background:var(--bad);animation:aud-pulso 1.2s ease-in-out infinite}
+@keyframes aud-pulso{50%{opacity:.25}}
+.aud-tempo{flex:none;font-family:var(--f-num);font-size:1.25rem;color:var(--bad)}
+.aud-ondawrap{flex:1;min-width:0}
+.aud-onda{display:block;width:100%;height:36px;color:var(--bad)}
+.aud-parar{flex:none;min-height:44px;border-color:var(--bad);background:var(--bad);color:var(--card)}
+.aud-mudo{color:var(--bad);font-weight:600;font-size:.88rem}
+.aud-mudo[hidden]{display:none}
+.aud-info{text-align:center}
+.aud-achada{border-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--card));font-size:.9rem}
+.aud-envios{display:grid;gap:8px;margin:10px 0}
+.aud-cartao{margin-top:8px}
+.aud-env{display:grid;gap:7px;border:1px solid var(--line2);border-left-width:4px;padding:9px 12px;font-size:.88rem;overflow-wrap:anywhere;background:color-mix(in srgb,var(--card) 70%,#fff)}
+.aud-env-tit{font-weight:600;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.aud-ok{border-left-color:var(--ok)}
+.aud-warn{border-left-color:var(--warn);background:color-mix(in srgb,var(--warn) 8%,var(--card))}
+.aud-bad{border-left-color:var(--bad);background:color-mix(in srgb,var(--bad) 8%,var(--card))}
+.aud-neutro{border-left-color:var(--info)}
+.aud-trilho{height:9px;border:1px solid var(--line2);background:var(--bg);overflow:hidden}
+.aud-barra{height:100%;background:var(--capa);transition:width .2s}
+.aud-semguardar{color:var(--bad);font-weight:600}
+.aud-acoes{display:flex;flex-wrap:wrap;gap:4px 16px}
+.aud-link{background:none;border:0;padding:0;min-height:36px;font:inherit;font-weight:600;color:inherit;text-decoration:underline;text-underline-offset:2px;cursor:pointer}
