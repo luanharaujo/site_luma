@@ -1,6 +1,7 @@
-import { S } from './estado.js?v=b7f6fb2a84'
-import { ic, TELAS } from './icones.js?v=b7f6fb2a84'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=b7f6fb2a84'
+import { S } from './estado.js?v=b98bcbb64f'
+import { ic, TELAS } from './icones.js?v=b98bcbb64f'
+import { telaIdeias } from './ideias.js?v=b98bcbb64f'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=b98bcbb64f'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -339,9 +340,6 @@ function telaCertidoes() {
     + '<p class="nota">Certidão vencida aparece como vencida mesmo que o robô ainda não tenha atualizado. Sem número de documento nem endereço nesta tela.</p>'
 }
 
-function telaIdeias() {
-  return sec('Ideias', `<p>A fila de ideias chega na próxima etapa.</p><p class="nota">Por enquanto, mande o pedido de mudança no site pelo WhatsApp do Duo.</p>`)
-}
 
 export const TELA_R = { inicio: telaInicio, onde: telaOnde, quem: telaQuem, impostos: telaImpostos, proximas: telaProximas, livro: telaLivro, contabil: telaContabil, excel: telaExcel, certidoes: telaCertidoes, ideias: telaIdeias }
 export { ctaLanc, derivar as _d }

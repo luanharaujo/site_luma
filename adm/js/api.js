@@ -49,6 +49,13 @@ export const API = {
   retirada: (b) => chama('POST', '/retiradas', b),
   transferencia: (b) => chama('POST', '/transferencias', b),
   voto: (id, voto, aprovacao) => chama('POST', `/decisoes/${encodeURIComponent(id)}/voto`, aprovacao ? { voto, aprovacao } : { voto }),
+  ideias: () => chama('GET', '/ideias'),
+  criaIdeia: (b) => chama('POST', '/ideias', b),
+  editaIdeia: (id, b) => chama('PUT', `/ideias/${encodeURIComponent(id)}`, b),
+  moveIdeia: (id, b) => chama('POST', `/ideias/${encodeURIComponent(id)}/mover`, b),
+  comentaIdeia: (id, texto) => chama('POST', `/ideias/${encodeURIComponent(id)}/comentarios`, { texto }),
+  agoraIdeia: (id, b) => chama('POST', `/ideias/${encodeURIComponent(id)}/agora`, b),
+  jaFizIdeia: (id) => chama('POST', `/ideias/${encodeURIComponent(id)}/ja-fiz`, {}),
   anexo: (arquivo, refTipo, refId) => chama('POST', '/anexos' + q({ ref_tipo: refTipo, ref_id: refId }), arquivo, { headers: { 'Content-Type': arquivo.type, 'X-Nome': encodeURIComponent(arquivo.name || 'anexo') } }),
 }
 

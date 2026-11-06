@@ -1,5 +1,5 @@
 // Estado único da página. Nada daqui é guardado no navegador; vem da API a cada carga.
-import { hojeIso } from './util.js?v=b7f6fb2a84'
+import { hojeIso } from './util.js?v=b98bcbb64f'
 export const S = {
   fase: 'carregando', // carregando | ok | restrito | proibido | erro
   eu: null, apelido: '',
@@ -7,5 +7,6 @@ export const S = {
   resumo: null, decisoes: [], eventos: [], lancMes: [], livro: null, notas: [], mesDados: null, excel: null, cert: null,
   filtro: { mes: 'aberto', tipo: 'tudo' },
   contMes: null, excelMes: null, excelAba: 'fluxo', excelGerado: null,
+  ideias: null, erroIdeias: '', ideiaAberta: null, comentando: null, confArq: null, feitasAbertas: false, rasc: {},
   folha: null, destaque: null, erroTela: '', atualizadoEm: null, hoje: hojeIso(),
 }
