@@ -2,8 +2,8 @@
 // Port of the treinos React screen (treine-com-a-gente/app/src/pages/bastidores.tsx) to plain strings.
 // Data: S.bast = { dados, recebido_em } (JSON v1 from ~/.ai-shared/bastidores/exportar.py, already filtered to sys-adm-*).
 // Everything here is a pure function of S + the clock: the host re-renders and we recompute "há X min" at render time.
-import { S } from './estado.js?v=969408b8fd'
-import { esc } from './util.js?v=969408b8fd'
+import { S } from './estado.js?v=a8a3ca4557'
+import { esc } from './util.js?v=a8a3ca4557'
 
 const FUSO = 3 * 3600e3 // Brasília, UTC-3 fixed (no DST since 2019)
 const DIA_MS = 864e5

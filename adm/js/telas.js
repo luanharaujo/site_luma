@@ -1,7 +1,7 @@
-import { S } from './estado.js?v=969408b8fd'
-import { ic, TELAS } from './icones.js?v=969408b8fd'
-import { telaIdeias } from './ideias.js?v=969408b8fd'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=969408b8fd'
+import { S } from './estado.js?v=a8a3ca4557'
+import { ic, TELAS } from './icones.js?v=a8a3ca4557'
+import { telaIdeias } from './ideias.js?v=a8a3ca4557'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=a8a3ca4557'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -326,11 +326,11 @@ export function telaExcel() {
 }
 
 /* ===== Certidões ===== */
-const ORDEM = ['falhou', 'vencida', 'vence_logo', 'renovando', 'manual', 'valida']
-const COR_ST = { valida: 'ok', vence_logo: 'warn', renovando: 'info', falhou: 'bad', manual: 'warn', vencida: 'bad' }
-const TXT_ST = { valida: 'válida', vence_logo: 'vence logo', renovando: 'renovando', falhou: 'falhou', manual: 'precisa de vocês', vencida: 'vencida' }
+const ORDEM = ['pendencia', 'faltando', 'falhou', 'vencida', 'vence_logo', 'renovando', 'manual', 'valida']
+const COR_ST = { valida: 'ok', vence_logo: 'warn', renovando: 'info', falhou: 'bad', manual: 'warn', vencida: 'bad', pendencia: 'bad', faltando: 'bad' }
+const TXT_ST = { valida: 'válida', vence_logo: 'vence logo', renovando: 'renovando', falhou: 'falhou', manual: 'precisa de vocês', vencida: 'vencida', pendencia: 'PENDÊNCIA: há débito', faltando: 'faltando' }
 const MODO = { automatico: 'renova sozinha', semi: 'pede ação', sob_demanda: 'só quando houver edital', manual: 'manual' }
-const NOME_CERT = { federal: 'Federal (Receita e PGFN)', fgts: 'FGTS', trabalhista: 'Trabalhista (CNDT)', estadual: 'Estadual (GDF)', municipal: 'Municipal', distrital: 'Distrital (GDF)', residencia: 'Comprovante de residência', antecedentes: 'Antecedentes criminais', cnpj: 'Cartão CNPJ' }
+const NOME_CERT = { federal: 'Federal (Receita e PGFN)', fgts: 'FGTS', trabalhista: 'Trabalhista (CNDT)', estadual: 'Estadual (GDF)', municipal: 'Municipal', distrital: 'Distrital (GDF)', residencia: 'Comprovante de residência', antecedentes: 'Antecedentes criminais', cnpj: 'Cartão CNPJ', comprovante_sede: 'Comprovante de sede' }
 const GRUPO = { empresa: 'Empresa', luan: 'Luan', mari: 'Mari' }
 const efetivo = (c, hoje) => ((c.status === 'valida' || c.status === 'vence_logo') && c.valida_ate && c.valida_ate < hoje ? 'vencida' : c.status)
 const diasEntre = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5)
@@ -340,12 +340,17 @@ function telaCertidoes() {
   const grupo = (t) => S.cert.filter((c) => c.titular === t).map((c) => ({ c, st: efetivo(c, hoje) })).sort((a, b) => ORDEM.indexOf(a.st) - ORDEM.indexOf(b.st) || String(a.c.valida_ate).localeCompare(String(b.c.valida_ate))).map(({ c, st }) => {
     const rest = c.valida_ate ? diasEntre(hoje, c.valida_ate) : null, tot = c.emitida_em && c.valida_ate ? Math.max(1, diasEntre(c.emitida_em, c.valida_ate)) : null
     const w = rest !== null && tot ? Math.max(0, Math.min(100, rest / tot * 100)) : 0
-    const link = c.titular !== 'luan' && c.arquivo_ref && /^https:\/\//.test(c.arquivo_ref) ? ` · <a href="${esc(c.arquivo_ref)}" target="_blank" rel="noopener noreferrer">abrir arquivo</a>` : ''
-    return `<div class="cert"><b class="tx-sm">${esc(NOME_CERT[c.tipo] || cap(String(c.tipo || '').replace(/[_-]/g, ' ')))}</b>${chip(COR_ST[st], TXT_ST[st])}<div class="vb"><span class="${COR_ST[st]}" data-w="${w.toFixed(1)}"></span></div>
-      <small>${rest === null ? 'sem validade registrada' : rest >= 0 ? 'vale até ' + dmy(c.valida_ate) + ' (' + rest + ' dias)' : 'venceu em ' + dmy(c.valida_ate)}${c.modo ? ' · ' + MODO[c.modo] : ''}${c.proxima_renovacao ? ' · renova em ' + dm(c.proxima_renovacao) : ''}${c.erro_curto && (st === 'falhou' || st === 'manual') ? ' · ' + esc(c.erro_curto) : ''}${link}</small></div>`
+    // The Drive link comes only from the API (never in the static HTML); anything but the exact Drive prefix is ignored.
+    const url = c.titular !== 'luan' && typeof c.arquivo_ref === 'string' && /^https:\/\/drive\.google\.com\/file\/d\/[A-Za-z0-9_-]{10,100}\/view$/.test(c.arquivo_ref) ? c.arquivo_ref : ''
+    const link = url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">abrir PDF</a>` : ''
+    const nome = esc(NOME_CERT[c.tipo] || cap(String(c.tipo || '').replace(/[_-]/g, ' ')))
+    return `<div class="cert${st === 'pendencia' ? ' pendencia' : ''}"><b class="tx-sm">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${nome}</a>` : nome}</b>${chip(COR_ST[st], TXT_ST[st])}<div class="vb"><span class="${COR_ST[st]}" data-w="${w.toFixed(1)}"></span></div>
+      <small>${rest === null ? 'sem validade registrada' : rest >= 0 ? 'vale até ' + dmy(c.valida_ate) + ' (' + rest + ' dias)' : 'venceu em ' + dmy(c.valida_ate)}${c.modo ? ' · ' + MODO[c.modo] : ''}${c.proxima_renovacao ? ' · renova em ' + dm(c.proxima_renovacao) : ''}${c.erro_curto && (st === 'falhou' || st === 'manual' || st === 'pendencia') ? ' · ' + esc(c.erro_curto) : ''}${link}</small></div>`
   }).join('')
   const falhas = S.cert.filter((c) => c.status === 'falhou').length
-  return (falhas ? `<div class="dec"><b>${ic('alerta')} ${falhas} emissão falhou</b><p class="nota">O sistema tenta de novo sozinho; só chama vocês se não der.</p></div>` : '')
+  const pend = S.cert.filter((c) => c.status === 'pendencia')
+  return (pend.length ? `<div class="dec pendencia"><b>${ic('alerta')} PENDÊNCIA: há débito em ${pend.length} certidão${pend.length > 1 ? 'ões' : ''}</b><p class="nota">Isso impede editais. Chame o agente SYS ADM do Duo LuMa. O aviso se repete todo dia até resolver.</p></div>` : '')
+    + (falhas ? `<div class="dec"><b>${ic('alerta')} ${falhas} emissão falhou</b><p class="nota">O sistema tenta de novo sozinho; só chama vocês se não der.</p></div>` : '')
     + ['empresa', 'luan', 'mari'].map((t) => { const g = grupo(t); return g ? sec(GRUPO[t], g) : '' }).join('')
     + '<p class="nota">Certidão vencida aparece como vencida mesmo que o robô ainda não tenha atualizado. Sem número de documento nem endereço nesta tela.</p>'
 }
