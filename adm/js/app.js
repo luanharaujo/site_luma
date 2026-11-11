@@ -1,15 +1,15 @@
-import { S } from './estado.js?v=47d287d395'
-import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=47d287d395'
-import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=47d287d395'
-import { ic, TELAS } from './icones.js?v=47d287d395'
-import { cab, nav, derivar, TELA_R } from './telas.js?v=47d287d395'
-import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=47d287d395'
-import { lerArquivo, prepararAnexo } from './leitor.js?v=47d287d395'
-import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=47d287d395'
-import { acoesIdeias, folhaIdeia, ligarRascunhos, ligarAoVivo, carregarIdeias } from './ideias.js?v=47d287d395'
-import { iniciarAudio, ligarEnvios, retomarEnvios, acoesAudio } from './audio.js?v=47d287d395'
-import { ligarPuxar } from './puxar.js?v=47d287d395'
-import { conferirVersao } from './versao.js?v=47d287d395'
+import { S } from './estado.js?v=969408b8fd'
+import { API, ErroApi, LOGIN, defineSessao, temSessao, tokenTreinos } from './api.js?v=969408b8fd'
+import { criarPasskey, erroPasskey, suportaPasskey, suportaPreenchimento, usarPasskey } from './passkey.js?v=969408b8fd'
+import { ic, TELAS } from './icones.js?v=969408b8fd'
+import { cab, nav, derivar, TELA_R } from './telas.js?v=969408b8fd'
+import { novaFolhaLancar, dadosPadrao, folhaLancar, folhaRetirar, lerCampos, montaPayload, corpoSimular, pendentesDe } from './folhas.js?v=969408b8fd'
+import { lerArquivo, prepararAnexo } from './leitor.js?v=969408b8fd'
+import { estilizar, esc, antMes, brl, hojeIso, horaTxt, nomeMes, reaisTxt, cap, lerReais } from './util.js?v=969408b8fd'
+import { acoesIdeias, folhaIdeia, ligarRascunhos, ligarAoVivo, carregarIdeias } from './ideias.js?v=969408b8fd'
+import { iniciarAudio, ligarEnvios, retomarEnvios, acoesAudio } from './audio.js?v=969408b8fd'
+import { ligarPuxar } from './puxar.js?v=969408b8fd'
+import { conferirVersao } from './versao.js?v=969408b8fd'
 
 const raiz = document.getElementById('casco')
 const app = document.getElementById('app')
@@ -41,6 +41,7 @@ async function carregar() {
   const t = S.tela
   const extra = []
   if (t === 'inicio') extra.push(API.lancamentos(a).then((x) => { S.lancMes = lista(x, 'lancamentos') }))
+  if (t === 'inicio') extra.push(API.avisosWise().then((x) => { S.avisosWise = lista(x, 'avisos') }).catch(() => { S.avisosWise = [] }))
   if (t === 'quem') extra.push(Promise.all([API.notas(a), API.notas(ant)]).then(([x, y]) => { S.notas = [...lista(y, 'notas'), ...lista(x, 'notas')] }))
   if (t === 'livro') { const c = S.filtro.mes === 'aberto' ? a : S.filtro.mes === 'anterior' ? ant : ''; extra.push(API.lancamentos(c).then((x) => { S.livro = { itens: lista(x, 'lancamentos') } })) }
   if (t === 'contabil') extra.push(API.mes(S.contMes).then((x) => { S.mesDados = x }))
@@ -194,6 +195,7 @@ const ACOES = {
   'remover-passkey': (d) => removerPasskey(d.id),
   sair: async () => { try { await LOGIN.sair() } catch (e) { /* sai do mesmo jeito */ } defineSessao(null); location.replace('/adm/?saiu=' + Date.now()) },
   conferir: (d) => escreve(() => API.confere(d.id), 'Conferido.'),
+  'wise-decidir': (d) => escreve(() => API.decideWise(d.id, d.v), d.v === 'nao_e_duo' ? 'Marcado: não é da Duo.' : 'Confirmado: é da Duo.'),
   filtro: (d) => { S.filtro[d.k] = d.v; if (d.k === 'mes') { S.livro = null; recarrega() } else render() },
   'cont-mes': (d) => { S.contMes = d.m; S.mesDados = null; render(); recarrega() },
   'excel-mes': (d) => { S.excelMes = d.m; S.excel = null; S.excelGerado = null; render(); recarrega() },
@@ -211,7 +213,7 @@ function carregaExcelJS() {
 }
 async function baixarExcel(modo = 'contador') {
   try {
-    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=47d287d395')
+    const { gerarXlsx, nomeDoArquivo } = await import('../excel/gerar_xlsx.mjs?v=969408b8fd')
     const bytes = await gerarXlsx(await carregaExcelJS(), S.excel, { modo })
     const url = URL.createObjectURL(new Blob([bytes], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }))
     const a = document.createElement('a'); a.href = url; a.download = nomeDoArquivo(S.excel, modo); document.body.appendChild(a); a.click(); a.remove()

@@ -2,12 +2,12 @@
 // Três abas: Nova ideia (texto, áudio, nível, "Guardar como ideia" | "Mandar implementar"), Ideias (fluxograma das etapas que
 // filtra a lista, cards, folhas Mover e Nível, ação rápida nos chips) e Bastidores (bastidores.js). Regra de dinheiro: só o Luan,
 // com Face ID (proposito ideia:<id>). Este arquivo desenha e entrega as ações; app.js só liga as peças.
-import { S } from './estado.js?v=47d287d395'
-import { ic } from './icones.js?v=47d287d395'
-import { esc } from './util.js?v=47d287d395'
-import { API, ErroApi, tokenSessao, urlApi } from './api.js?v=47d287d395'
-import { telaBastidores, liberacaoNivel, pendenciaDaIdeia, htmlAvisoBugCritico } from './bastidores.js?v=47d287d395'
-import { htmlGravador, gravacaoAtual, gravando, limparGravador, guardarNovaIdeia, htmlEnvios, htmlOuvir } from './audio.js?v=47d287d395'
+import { S } from './estado.js?v=969408b8fd'
+import { ic } from './icones.js?v=969408b8fd'
+import { esc } from './util.js?v=969408b8fd'
+import { API, ErroApi, tokenSessao, urlApi } from './api.js?v=969408b8fd'
+import { telaBastidores, liberacaoNivel, pendenciaDaIdeia, htmlAvisoBugCritico } from './bastidores.js?v=969408b8fd'
+import { htmlGravador, gravacaoAtual, gravando, limparGravador, guardarNovaIdeia, htmlEnvios, htmlOuvir } from './audio.js?v=969408b8fd'
 
 const NIVEIS = [
   ['bug_critico', 'Bug crítico', 'bad'], ['bug', 'Bug', 'bad'], ['feature_urgente', 'Feature urgente', 'mari'],

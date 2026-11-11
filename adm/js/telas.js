@@ -1,7 +1,7 @@
-import { S } from './estado.js?v=47d287d395'
-import { ic, TELAS } from './icones.js?v=47d287d395'
-import { telaIdeias } from './ideias.js?v=47d287d395'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=47d287d395'
+import { S } from './estado.js?v=969408b8fd'
+import { ic, TELAS } from './icones.js?v=969408b8fd'
+import { telaIdeias } from './ideias.js?v=969408b8fd'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=969408b8fd'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -82,12 +82,19 @@ export function blocoDecisao(d) {
 }
 function secDecisoes() {
   const out = S.decisoes.map(blocoDecisao)
+  for (const w of S.avisosWise || []) {
+    const quem = w.contraparte ? ` de <span class="txt">${esc(w.contraparte)}</span>` : ''
+    const btns = S.eu === 'luan'
+      ? `<div class="btns"><button class="btn mini pri" data-acao="wise-decidir" data-id="${esc(w.id)}" data-v="da_duo">É da Duo</button><button class="btn mini" data-acao="wise-decidir" data-id="${esc(w.id)}" data-v="nao_e_duo">Não é da Duo</button></div>`
+      : '<p class="nota">Só o Luan confirma (a conta é dele).</p>'
+    out.push(`<div class="dec"><b>Entrada na Wise, tratada como da Duo: ${brl(w.valor_cents)} em ${esc(dmy(w.data))}${quem}. Confirme.</b><p class="nota">Aviso automático. Nada foi lançado nem movido.</p>${btns}</div>`)
+  }
   for (const l of S.lancMes.filter((x) => x.a_conferir))
     out.push(`<div class="dec"><b>Confirmar valor lido do comprovante: ${esc(l.descricao)} (${brl(l.valor)})</b><p class="nota">Veio com comprovante. Já conta no saldo, marcado a conferir, até um de vocês confirmar.</p><div class="btns"><button class="btn mini pri" data-acao="conferir" data-id="${esc(l.id)}">Confere</button></div></div>`)
   return out.length ? sec('Para decidir', out.join(''), `<span class="nota">${out.length} ${out.length > 1 ? 'pendências' : 'pendência'}</span>`) : ''
 }
 const VERBO = { criar: 'lançou', editar: 'editou', apagar: 'apagou', anexar: 'anexou arquivo em', conferir: 'conferiu', importar: 'importou', gravar: 'atualizou', votar: 'votou em', retirar: 'registrou', transferir: 'registrou' }
-const OBJ = { nota: 'a nota', lancamento: 'o lançamento', anexo: 'um anexo', lote: 'um lote de lançamentos', certidao: 'a certidão', decisao: 'a decisão', retirada: 'a retirada', transferencia: 'a transferência', conta: 'a conta' }
+const OBJ = { nota: 'a nota', lancamento: 'o lançamento', anexo: 'um anexo', lote: 'um lote de lançamentos', certidao: 'a certidão', decisao: 'a decisão', retirada: 'a retirada', transferencia: 'a transferência', conta: 'a conta', aviso_wise: 'o aviso da Wise' }
 function secAtualizacoes() {
   const hoje = S.resumo.data
   const it = S.eventos.slice(0, 6).map((e, i) => {
