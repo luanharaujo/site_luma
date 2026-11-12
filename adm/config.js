@@ -1,11 +1,11 @@
 // Único lugar com os endereços das páginas do /adm. Roda primeiro: também recusa rodar dentro de iframe.
 if (window.top !== window.self) { document.documentElement.innerHTML = ''; throw new Error('Esta página não abre dentro de outra.') }
 window.ADM_CONFIG = {
-  versao: 'a8a3ca4557', // carimbada pelo scripts/publicar.sh na cópia publicada
+  versao: 'd2226dfcd2', // carimbada pelo scripts/publicar.sh na cópia publicada
   api: 'https://adm-api.duoluma.workers.dev',
-  exceljs: '/adm/vendor/exceljs.min.js?v=a8a3ca4557',
-  pdfjs: '/adm/vendor/pdf.min.js?v=a8a3ca4557',
-  pdfworker: '/adm/vendor/pdf.worker.min.js?v=a8a3ca4557',
+  exceljs: '/adm/vendor/exceljs.min.js?v=d2226dfcd2',
+  pdfjs: '/adm/vendor/pdf.min.js?v=d2226dfcd2',
+  pdfworker: '/adm/vendor/pdf.worker.min.js?v=d2226dfcd2',
 }
 // Só na prévia local: aponta para a API de mentira (127.0.0.1:8965; a integração troca a porta) e, com ?token=, usa esse valor como
 // sessão do ADM só em memória (a API de mentira aceita "luan"/"mari"). localhost: o Face ID de teste (WebAuthn não aceita IP).

@@ -1,7 +1,7 @@
-import { S } from './estado.js?v=a8a3ca4557'
-import { ic, TELAS } from './icones.js?v=a8a3ca4557'
-import { telaIdeias } from './ideias.js?v=a8a3ca4557'
-import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=a8a3ca4557'
+import { S } from './estado.js?v=d2226dfcd2'
+import { ic, TELAS } from './icones.js?v=d2226dfcd2'
+import { telaIdeias } from './ideias.js?v=d2226dfcd2'
+import { brl, sbrl, dbrl, dm, dmy, nomeMes, mesAno, cap, proxMes, antMes, esc, pct, NOME, soma, horaTxt } from './util.js?v=d2226dfcd2'
 
 const COR = { luan: 'var(--luan)', mari: 'var(--mari)', duo: 'var(--duo)', impostos: 'var(--imp)', a_decidir: 'var(--muted)' }
 export const chip = (cls, txt) => `<span class="chip ${cls}">${txt}</span>`
@@ -331,6 +331,7 @@ const COR_ST = { valida: 'ok', vence_logo: 'warn', renovando: 'info', falhou: 'b
 const TXT_ST = { valida: 'válida', vence_logo: 'vence logo', renovando: 'renovando', falhou: 'falhou', manual: 'precisa de vocês', vencida: 'vencida', pendencia: 'PENDÊNCIA: há débito', faltando: 'faltando' }
 const MODO = { automatico: 'renova sozinha', semi: 'pede ação', sob_demanda: 'só quando houver edital', manual: 'manual' }
 const NOME_CERT = { federal: 'Federal (Receita e PGFN)', fgts: 'FGTS', trabalhista: 'Trabalhista (CNDT)', estadual: 'Estadual (GDF)', municipal: 'Municipal', distrital: 'Distrital (GDF)', residencia: 'Comprovante de residência', antecedentes: 'Antecedentes criminais', cnpj: 'Cartão CNPJ', comprovante_sede: 'Comprovante de sede' }
+const NOME_ANTIGO = 'nome antigo no PDF'
 const GRUPO = { empresa: 'Empresa', luan: 'Luan', mari: 'Mari' }
 const efetivo = (c, hoje) => ((c.status === 'valida' || c.status === 'vence_logo') && c.valida_ate && c.valida_ate < hoje ? 'vencida' : c.status)
 const diasEntre = (a, b) => Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5)
@@ -344,8 +345,10 @@ function telaCertidoes() {
     const url = c.titular !== 'luan' && typeof c.arquivo_ref === 'string' && /^https:\/\/drive\.google\.com\/file\/d\/[A-Za-z0-9_-]{10,100}\/view$/.test(c.arquivo_ref) ? c.arquivo_ref : ''
     const link = url ? ` · <a href="${esc(url)}" target="_blank" rel="noopener noreferrer">abrir PDF</a>` : ''
     const nome = esc(NOME_CERT[c.tipo] || cap(String(c.tipo || '').replace(/[_-]/g, ' ')))
-    return `<div class="cert${st === 'pendencia' ? ' pendencia' : ''}"><b class="tx-sm">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${nome}</a>` : nome}</b>${chip(COR_ST[st], TXT_ST[st])}<div class="vb"><span class="${COR_ST[st]}" data-w="${w.toFixed(1)}"></span></div>
-      <small>${rest === null ? 'sem validade registrada' : rest >= 0 ? 'vale até ' + dmy(c.valida_ate) + ' (' + rest + ' dias)' : 'venceu em ' + dmy(c.valida_ate)}${c.modo ? ' · ' + MODO[c.modo] : ''}${c.proxima_renovacao ? ' · renova em ' + dm(c.proxima_renovacao) : ''}${c.erro_curto && (st === 'falhou' || st === 'manual' || st === 'pendencia') ? ' · ' + esc(c.erro_curto) : ''}${link}</small></div>`
+    // The robot reads the filed PDF and prefixes erro_curto when it still carries the company's old name.
+    const ant = typeof c.erro_curto === 'string' && c.erro_curto.startsWith(NOME_ANTIGO), erro = ant ? c.erro_curto.slice(NOME_ANTIGO.length).replace(/^ · /, '') : c.erro_curto
+    return `<div class="cert${st === 'pendencia' ? ' pendencia' : ''}"><b class="tx-sm">${url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer">${nome}</a>` : nome}</b>${chip(COR_ST[st], TXT_ST[st])}${ant ? chip('warn', 'nome antigo no PDF') : ''}<div class="vb"><span class="${COR_ST[st]}" data-w="${w.toFixed(1)}"></span></div>
+      <small>${rest === null ? 'sem validade registrada' : rest >= 0 ? 'vale até ' + dmy(c.valida_ate) + ' (' + rest + ' dias)' : 'venceu em ' + dmy(c.valida_ate)}${c.modo ? ' · ' + MODO[c.modo] : ''}${c.proxima_renovacao ? ' · renova em ' + dm(c.proxima_renovacao) : ''}${erro && (st === 'falhou' || st === 'manual' || st === 'pendencia') ? ' · ' + esc(erro) : ''}${ant ? ' · emitida no nome antigo; reemitir quando o órgão atualizar' : ''}${link}</small></div>`
   }).join('')
   const falhas = S.cert.filter((c) => c.status === 'falhou').length
   const pend = S.cert.filter((c) => c.status === 'pendencia')
