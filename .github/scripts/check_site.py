@@ -21,7 +21,7 @@ OPTIONAL_END = {"p", "li", "dt", "dd", "option", "optgroup", "tr", "td", "th",
 BLOCKED_EXT = {".csv", ".tsv", ".xlsx", ".xls", ".ods", ".sqlite", ".sqlite3",
                ".db", ".env", ".pem", ".key", ".p12", ".pfx", ".jsonl",
                ".log", ".bak", ".sql", ".vcf", ".zip"}
-ALLOWED_JSON = {"manifest.webmanifest", "adm/versao.json"}
+ALLOWED_JSON = {"manifest.webmanifest", "adm/versao.json", "treinos/versao.json"}
 SECRET_PATTERNS = [
     (re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----"), "private key"),
     (re.compile(r"\bgh[pousr]_[A-Za-z0-9]{30,}\b"), "GitHub token"),
