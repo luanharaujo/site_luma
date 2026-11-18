@@ -18,7 +18,7 @@
   <meta name="apple-mobile-web-app-title" content="Duo LuMa" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT@9..144,500..700,100&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Fraunces:opsz,wght,SOFT@9..144,650,100&display=swap" rel="stylesheet" />
   <style>
     :root {
       --verde: #1a5c31;
@@ -123,8 +123,12 @@
 <body>
   <main class="capa">
     <picture>
+      <source media="(min-width: 900px) and (min-aspect-ratio: 4/3)" type="image/avif" srcset="img/capa-larga-1280.avif 1280w, img/capa-larga-1920.avif 1920w" sizes="100vw" />
+      <source media="(min-width: 900px) and (min-aspect-ratio: 4/3)" type="image/webp" srcset="img/capa-larga-1280.webp 1280w, img/capa-larga-1920.webp 1920w" sizes="100vw" />
       <source media="(min-width: 900px) and (min-aspect-ratio: 4/3)" srcset="img/capa-larga.jpg" />
-      <img class="foto" src="img/capa-alta.jpg" alt="Mari no ar em toe touch, lançada pelo Luan, num treino na UnB" />
+      <source type="image/avif" srcset="img/capa-alta-700.avif 700w, img/capa-alta-1050.avif 1050w, img/capa-alta-1400.avif 1400w" sizes="100vw" />
+      <source type="image/webp" srcset="img/capa-alta-700.webp 700w, img/capa-alta-1050.webp 1050w, img/capa-alta-1400.webp 1400w" sizes="100vw" />
+      <img class="foto" src="img/capa-alta.jpg" width="1400" height="2100" fetchpriority="high" decoding="async" alt="Mari no ar em toe touch, lançada pelo Luan, num treino na UnB" />
     </picture>
     <img class="logo-topo" src="img/logo-branca.svg" alt="Logo do Duo LuMa" />
     <nav class="menu-duo" id="menu-duo" hidden aria-label="Áreas do duo">
@@ -135,7 +139,7 @@
       <img class="logo" src="img/logo-branca.svg" alt="" />
       <h1>Duo LuMa</h1>
       <p class="sub">Mão a mão e partner stunt em Brasília. Luan e Mari.</p>
-      <nav class="botoes">
+      <nav class="botoes" aria-label="Links principais">
         <a class="botao treinos" href="/treinos/">
           Treine com a gente
         </a>
