@@ -26,7 +26,9 @@ set -euo pipefail
 case "$1" in
   api) jq -c '.[]' "$FAKE_RELEASES" ;;
   release)  # release download <tag> --repo r --pattern <p>.tar.gz --dir <d> --clobber
-    tag="$3"; while [ $# -gt 0 ]; do case "$1" in --pattern) p="$2";; --dir) d="$2";; esac; shift; done
+    tag="$3"
+    jq -e --arg t "$tag" 'any(.[]; .tag_name == $t)' "$FAKE_RELEASES" >/dev/null || { echo "release not found" >&2; exit 1; }
+    while [ $# -gt 0 ]; do case "$1" in --pattern) p="$2";; --dir) d="$2";; esac; shift; done
     mkdir -p "$d" "$d/src"; printf '{"tag":"%s"}' "$tag" > "$d/src/versao.json"
     tar -czf "$d/$p" -C "$d/src" versao.json ;;
   *) echo "fake gh: unexpected $*" >&2; exit 2 ;;
@@ -42,18 +44,37 @@ cd "$t/repo"
 export PATH="$t/bin:$PATH" FAKE_RELEASES="$t/releases.json" GITHUB_REPOSITORY=x/y
 mkdir -p .github/scripts; cp "$raiz/.github/scripts/"{montar_site.sh,versoes.jq} .github/scripts/
 echo capa > index.html
-# The treinos dispatch: VERSAO_TREINOS set, VERSAO_ADM empty.
-VERSAO_TREINOS=parte-treinos-23ed160 VERSAO_ADM= bash .github/scripts/montar_site.sh _site >/dev/null
+# The treinos dispatch (payload names treinos only).
+DISPATCH_PARTE=treinos DISPATCH_TAG=parte-treinos-23ed160 bash .github/scripts/montar_site.sh _site >/dev/null
 confere "treinos dispatch keeps newest adm" _site/adm/versao.json parte-adm-32f8661
 confere "treinos dispatch uses its own tag" _site/treinos/versao.json parte-treinos-23ed160
 # A plain push: both empty.
-VERSAO_TREINOS= VERSAO_ADM= bash .github/scripts/montar_site.sh _site >/dev/null
+bash .github/scripts/montar_site.sh _site >/dev/null
 confere "push picks newest treinos" _site/treinos/versao.json parte-treinos-23ed160
 confere "push picks newest adm" _site/adm/versao.json parte-adm-32f8661
 # Prune order (oldest first): newest must be last.
 ordem="$(jq -s -r --arg parte adm -f .github/scripts/versoes.jq <(jq -c '.[]' "$FAKE_RELEASES") | tr '\n' ' ')"
 [ "$ordem" = "parte-adm-2e006a7 parte-adm-9d2d4fd parte-adm-32f8661 " ] \
   && echo "ok   order: $ordem" || { echo "FAIL order: $ordem"; falhas=1; }
+# --- Pin (rollback that sticks) ---
+monta() { env -u VERSAO_TREINOS -u VERSAO_ADM -u PIN_TREINOS -u PIN_ADM -u DISPATCH_PARTE -u DISPATCH_TAG \
+  GITHUB_STEP_SUMMARY="$t/resumo.md" "$@" bash .github/scripts/montar_site.sh _site >"$t/saida.txt" 2>&1; }
+: > "$t/resumo.md"
+monta PIN_ADM=parte-adm-9d2d4fd DISPATCH_PARTE=treinos DISPATCH_TAG=parte-treinos-23ed160
+confere "pin holds adm on a treinos dispatch" _site/adm/versao.json parte-adm-9d2d4fd
+confere "treinos dispatch still goes live with adm pinned" _site/treinos/versao.json parte-treinos-23ed160
+grep -q '| adm | parte-adm-9d2d4fd | pino |' "$t/resumo.md" && grep -q '::warning::adm pinned' "$t/saida.txt" \
+  && echo "ok   summary and warning show the pin" || { echo "FAIL summary/warning missing the pin"; falhas=1; }
+monta PIN_ADM=parte-adm-9d2d4fd DISPATCH_PARTE=adm DISPATCH_TAG=parte-adm-32f8661
+confere "pin holds adm even on an adm dispatch" _site/adm/versao.json parte-adm-9d2d4fd
+monta PIN_ADM=parte-adm-9d2d4fd VERSAO_ADM=parte-adm-2e006a7
+confere "manual run tag beats the pin" _site/adm/versao.json parte-adm-2e006a7
+monta DISPATCH_PARTE=adm DISPATCH_TAG=parte-adm-9d2d4fd
+confere "no pin: dispatch tag of its own part is used" _site/adm/versao.json parte-adm-9d2d4fd
+confere "no pin: other part goes to newest" _site/treinos/versao.json parte-treinos-23ed160
+for ruim in parte-treinos-23ed160 parte-adm-0000000; do
+  if monta PIN_ADM=$ruim; then echo "FAIL bad pin $ruim was accepted"; falhas=1; else echo "ok   bad pin $ruim fails the run"; fi
+done
 # Sanity: the old filter (sort_by created_at, last) picks the stale adm here.
 velho="$(jq -r '[.[] | select(.tag_name | startswith("parte-adm-")) | select(.draft|not) | select(.assets[0].state=="uploaded")] | sort_by(.created_at) | last | .tag_name' "$FAKE_RELEASES")"
 [ "$velho" = parte-adm-9d2d4fd ] && echo "ok   old filter reproduces the bug: $velho" \

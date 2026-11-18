@@ -7,10 +7,10 @@ on:
   workflow_dispatch:
     inputs:
       versao_treinos:
-        description: "Release tag for treinos (empty = newest), e.g. parte-treinos-1a2b3c4"
+        description: "Release tag for treinos for this run only (empty = pin or newest). To make a rollback stick, set the repo variable PIN_TREINOS"
         required: false
       versao_adm:
-        description: "Release tag for adm (empty = newest), e.g. parte-adm-1a2b3c4"
+        description: "Release tag for adm for this run only (empty = pin or newest). To make a rollback stick, set the repo variable PIN_ADM"
         required: false
   repository_dispatch:
     types: [parte-atualizada]
@@ -36,8 +36,12 @@ jobs:
         id: montar
         env:
           GH_TOKEN: ${{ github.token }}
-          VERSAO_TREINOS: ${{ inputs.versao_treinos || (github.event.client_payload.parte == 'treinos' && github.event.client_payload.tag) || '' }}
-          VERSAO_ADM: ${{ inputs.versao_adm || (github.event.client_payload.parte == 'adm' && github.event.client_payload.tag) || '' }}
+          VERSAO_TREINOS: ${{ inputs.versao_treinos }}
+          VERSAO_ADM: ${{ inputs.versao_adm }}
+          PIN_TREINOS: ${{ vars.PIN_TREINOS }}
+          PIN_ADM: ${{ vars.PIN_ADM }}
+          DISPATCH_PARTE: ${{ github.event.client_payload.parte }}
+          DISPATCH_TAG: ${{ github.event.client_payload.tag }}
         run: bash .github/scripts/montar_site.sh _site
       - name: Check HTML, internal links and data-like files
         run: python3 .github/scripts/check_site.py _site
