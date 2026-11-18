@@ -30,6 +30,8 @@ jobs:
       publicadas: ${{ steps.montar.outputs.publicadas }}
     steps:
       - uses: actions/checkout@v4
+      - name: Test version choice (regression for the 18/11 race)
+        run: bash .github/tests/test_montar_site.sh
       - name: Assemble site (cover + parts from releases)
         id: montar
         env:
@@ -71,12 +73,15 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       PUBLICADAS: ${{ needs.check.outputs.publicadas }}
     steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: .github/scripts
       - run: |
           set -euo pipefail
-          lista="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt)"
+          lista="$(gh api --paginate "repos/$GITHUB_REPOSITORY/releases?per_page=100" --jq '.[]')"
           for parte in treinos adm; do
-            jq -r --arg p "parte-$parte-" \
-              '[.[] | select(.tagName | startswith($p))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' <<<"$lista" |
+            # Same ordering as montar_site.sh (published_at, not created_at).
+            jq -s -r --arg parte "$parte" -f .github/scripts/versoes.jq <<<"$lista" | tac | tail -n +11 |
             while read -r tag; do
               # Never delete a version that is live right now (e.g. after a rollback).
               case " $PUBLICADAS " in *" $tag "*) echo "keep live $tag"; continue;; esac
