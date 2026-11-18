@@ -1,0 +1,111 @@
+# Merge queue for a personal account (GitHub's native merge queue is not
+# available here). The Mergify/Kodiak pattern on top of GitHub auto-merge:
+# the owner only approves; auto-merge (rebase) merges when the PR is approved,
+# green and up to date. This job keeps exactly ONE approved PR "in flight":
+# when main moves, it rebases the oldest approved PR that fell behind, its CI
+# runs again, auto-merge merges it, main moves, and the next one goes.
+# One at a time, so CI minutes are not burned on PRs that would fall behind again.
+#
+# Token: a dedicated GitHub App (no ruleset bypass), key in the "merge-queue"
+# environment, which only the main branch can use. A push made with the default
+# GITHUB_TOKEN would not start CI, so the App token is required.
+name: Merge queue
+
+on:
+  push:
+    branches: [main]
+  pull_request_target:          # runs main's copy of this file; PR code is never checked out
+    types: [auto_merge_enabled, synchronize]   # synchronize: a push on the branch clears the conflict label
+  workflow_run:                 # CI finished somewhere, or the owner approved a PR
+    workflows: ["site", "Merge queue trigger"]
+    types: [completed]
+  workflow_dispatch:
+
+concurrency:
+  group: merge-queue
+  cancel-in-progress: false
+
+permissions: {}
+
+jobs:
+  advance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    environment: merge-queue
+    steps:
+      - id: token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
+        with:
+          client-id: ${{ vars.MERGE_QUEUE_CLIENT_ID }}
+          private-key: ${{ secrets.MERGE_QUEUE_KEY }}
+          permission-contents: write
+          permission-pull-requests: write
+          permission-workflows: write
+          permission-issues: write
+          permission-checks: read      # CI state of each PR (statusCheckRollup)
+          permission-statuses: read
+      - name: Rebase the next approved pull request
+        env:
+          GH_TOKEN: ${{ steps.token.outputs.token }}
+          REPO: ${{ github.repository }}
+          BASE: ${{ github.event.repository.default_branch }}
+          PR: ${{ github.event.pull_request.number }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          set -euo pipefail
+          # A new push on a parked branch is the owner's fix: put it back in the queue.
+          if [ "$ACTION" = synchronize ] && [ -n "$PR" ]; then
+            gh pr edit "$PR" -R "$REPO" --remove-label "merge-queue: conflict" >/dev/null 2>&1 || true
+          fi
+          q='query($o:String!,$n:String!,$b:String!){repository(owner:$o,name:$n){pullRequests(states:OPEN,baseRefName:$b,first:50,orderBy:{field:CREATED_AT,direction:ASC}){nodes{
+               id number isDraft reviewDecision mergeStateStatus headRefOid autoMergeRequest{mergeMethod}
+               labels(first:20){nodes{name}} commits(last:1){nodes{commit{committedDate statusCheckRollup{state}}}}}}}}'
+          list() {
+            gh api graphql -f query="$q" -f o="${REPO%/*}" -f n="${REPO#*/}" -f b="$BASE" --jq '
+              [.data.repository.pullRequests.nodes[]
+               | select(.isDraft|not) | select(.autoMergeRequest) | select(.reviewDecision=="APPROVED")
+               | select([.labels.nodes[].name]|index("merge-queue: conflict")|not)
+               | {id, number, head: .headRefOid, state: .mergeStateStatus,
+                  ci: (.commits.nodes[0].commit.statusCheckRollup.state // "NONE"),
+                  age: (now - (.commits.nodes[0].commit.committedDate | fromdateiso8601))}]'
+          }
+          # GitHub computes mergeStateStatus lazily: ask again while it says UNKNOWN.
+          for i in 1 2 3 4 5 6; do
+            prs=$(list)
+            echo "$prs" | jq -e 'any(.[]; .state=="UNKNOWN")' >/dev/null || break
+            sleep 5
+          done
+          echo "$prs" | jq -r '.[] | "#\(.number) \(.state) ci=\(.ci)"'
+          # Approved PRs already in conflict with main (DIRTY) cannot go in: tell the owner once (the label
+          # also takes them out of the next runs). Typical case: a stacked PR after the one below was rebase-merged.
+          for n in $(echo "$prs" | jq -r '.[] | select(.state=="DIRTY") | .number'); do
+            gh label create "merge-queue: conflict" -R "$REPO" --color B60205 --force >/dev/null || true
+            # Labeled PRs are filtered out of the list above, so this comment goes once per conflict.
+            # A failure here only warns: it must never stop the queue for the other PRs.
+            gh pr edit "$n" -R "$REPO" --add-label "merge-queue: conflict" >/dev/null || echo "::warning::could not label #$n"
+            gh pr comment "$n" -R "$REPO" --body "Merge queue: this branch conflicts with \`$BASE\`. Rebase it on \`$BASE\` and push; any push to this branch removes the label and the queue takes it again." >/dev/null || echo "::warning::could not comment on #$n"
+          done
+          # In flight: approved, up to date, CI still running (or green and about to merge).
+          # A head older than 90 min (CI timeout + margin) whose check never finished does not hold the queue.
+          if echo "$prs" | jq -e 'any(.[]; .state!="BEHIND" and .state!="DIRTY" and .age < 5400 and (.ci=="PENDING" or .ci=="EXPECTED" or .state=="CLEAN"))' >/dev/null; then
+            echo "A pull request is already in flight; nothing to do."; exit 0
+          fi
+          # Oldest first. A branch that cannot be rebased (conflict) is labeled and skipped.
+          for row in $(echo "$prs" | jq -c '.[] | select(.state=="BEHIND") | select(.ci!="FAILURE" and .ci!="ERROR") | {id,number,head}'); do
+            n=$(echo "$row" | jq -r .number)
+            echo "Rebasing #$n on $BASE"
+            if out=$(gh api graphql -f query='mutation($id:ID!,$h:GitObjectID!){updatePullRequestBranch(input:{pullRequestId:$id,expectedHeadOid:$h,updateMethod:REBASE}){pullRequest{number}}}' \
+                 -f id="$(echo "$row" | jq -r .id)" -f h="$(echo "$row" | jq -r .head)" 2>&1); then
+              echo "Rebased #$n; CI runs again and auto-merge takes it from here."; exit 0
+            fi
+            echo "$out"
+            # Only a real conflict parks the PR. Anything else (branch moved meanwhile, network)
+            # fails this run; the next event tries again.
+            if ! echo "$out" | grep -qi conflict; then
+              echo "::warning::could not rebase #$n (not a conflict); the next run retries"; exit 1
+            fi
+            gh label create "merge-queue: conflict" -R "$REPO" --color B60205 --force >/dev/null
+            gh pr edit "$n" -R "$REPO" --add-label "merge-queue: conflict"
+            gh pr comment "$n" -R "$REPO" --body "Merge queue: could not rebase this branch on \`$BASE\` (conflict). The queue skips it until the branch is fixed and the label is removed."
+          done
+          echo "Queue empty."

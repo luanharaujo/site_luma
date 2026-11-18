@@ -1,0 +1,18 @@
+# Wakes the merge queue when the owner approves a pull request. It has no
+# secrets and does nothing itself: "Merge queue" listens for this workflow
+# (workflow_run) and runs from main, where its token is allowed.
+name: Merge queue trigger
+
+on:
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  approved:
+    if: github.event.review.state == 'approved'
+    runs-on: ubuntu-latest
+    timeout-minutes: 1
+    steps:
+      - run: echo "Approved; the merge queue will look at it."
