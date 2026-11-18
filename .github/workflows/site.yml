@@ -61,6 +61,24 @@ jobs:
       - id: deployment
         uses: actions/deploy-pages@v4
 
+  # Is the live site the version this run published? Each page must answer 200
+  # and match the deployed file (Pages artifact), with retries for the CDN cache.
+  # A red run on main wakes the owner.
+  no-ar:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: read
+    steps:
+      - uses: luanharaujo/web-quality-kit/actions/web-live@v1.1.0
+        with:
+          base-url: https://duoluma.com.br
+          pages-artifact: "true"
+          paths: / /treinos/ /adm/ /adm/versao.json
+
   prune:
     # Keep the 10 newest versions of each part (older ones can't be rolled back to).
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
