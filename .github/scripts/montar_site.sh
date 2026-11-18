@@ -1,12 +1,11 @@
 #!/usr/bin/env bash
 # Assemble the published site: cover from this repo + each part (treinos, adm)
 # from a versioned release "parte-<name>-<sha7>" (asset <name>.tar.gz) built by
-# the part's own repo.
+# the part's own repo. The parts no longer live in this repo.
 #
 # Which version of each part goes live:
 #   1. VERSAO_<PARTE> env (workflow_dispatch input or dispatch payload), e.g. parte-adm-1a2b3c4
 #   2. otherwise the newest release whose tag starts with "parte-<name>-"
-#   3. until step (c): the folder committed in this repo
 # Rollback = run the workflow with the previous version, or delete the bad release.
 set -euo pipefail
 out="${1:-_site}"
@@ -38,11 +37,8 @@ for parte in treinos adm; do
     tar -xzf "$tmp/$parte/$parte.tar.gz" -C "$out/$parte" --no-same-owner
     echo "$parte: $tag"; echo "| $parte | $tag |" >> "$resumo"
     publicadas="${publicadas:-} $tag"
-  elif [ -z "$tag" ] && [ -d "$parte" ]; then
-    rsync -a "$parte/" "$out/$parte/"
-    echo "$parte: folder in repo"; echo "| $parte | pasta do repositório |" >> "$resumo"
   else
-    echo "::error::$parte: could not get '$tag' and no fallback"; exit 1
+    echo "::error::$parte: no release found (got '$tag')"; exit 1
   fi
 done
 echo "publicadas=${publicadas:-}" >> "${GITHUB_OUTPUT:-/dev/null}"
