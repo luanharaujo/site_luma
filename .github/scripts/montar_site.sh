@@ -12,7 +12,7 @@ set -euo pipefail
 out="${1:-_site}"
 repo="${GITHUB_REPOSITORY:?}"
 rm -rf "$out"; mkdir -p "$out"
-rsync -a --exclude '.git' --exclude '.github' --exclude "$out" \
+rsync -a --exclude '.git' --exclude '.github' --exclude "/$out" \
   --exclude 'treinos/' --exclude 'adm/' ./ "$out/"
 tmp="$(mktemp -d)"
 resumo="${GITHUB_STEP_SUMMARY:-/dev/null}"
@@ -22,8 +22,11 @@ for parte in treinos adm; do
   var="VERSAO_$(echo "$parte" | tr a-z A-Z)"
   tag="${!var:-}"
   if [ -z "$tag" ]; then
-    tag="$(gh release list --repo "$repo" --limit 100 --json tagName,createdAt \
-      -q "[.[] | select(.tagName | startswith(\"parte-$parte-\"))] | sort_by(.createdAt) | last | .tagName // empty")"
+    # Fail loudly if the API call fails (an empty list is fine, an error is not).
+    lista="$(gh release list --repo "$repo" --limit 100 --json tagName,createdAt)" \
+      || { echo "::error::$parte: could not list releases"; exit 1; }
+    tag="$(jq -r --arg p "parte-$parte-" \
+      '[.[] | select(.tagName | startswith($p))] | sort_by(.createdAt) | last | .tagName // empty' <<<"$lista")"
   fi
   case "$tag" in ""|parte-"$parte"-*) ;; *) echo "::error::$parte: bad version '$tag'"; exit 1;; esac
   if [ -n "$tag" ] && gh release download "$tag" --repo "$repo" \
@@ -34,6 +37,7 @@ for parte in treinos adm; do
     fi
     tar -xzf "$tmp/$parte/$parte.tar.gz" -C "$out/$parte" --no-same-owner
     echo "$parte: $tag"; echo "| $parte | $tag |" >> "$resumo"
+    publicadas="${publicadas:-} $tag"
   elif [ -z "$tag" ] && [ -d "$parte" ]; then
     rsync -a "$parte/" "$out/$parte/"
     echo "$parte: folder in repo"; echo "| $parte | pasta do repositório |" >> "$resumo"
@@ -41,4 +45,5 @@ for parte in treinos adm; do
     echo "::error::$parte: could not get '$tag' and no fallback"; exit 1
   fi
 done
+echo "publicadas=${publicadas:-}" >> "${GITHUB_OUTPUT:-/dev/null}"
 if find "$out" -type l | grep -q .; then echo "::error::symlinks in site"; exit 1; fi
