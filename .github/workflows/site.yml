@@ -5,6 +5,15 @@ on:
     branches: [main]
   pull_request:
   workflow_dispatch:
+    inputs:
+      versao_treinos:
+        description: "Release tag for treinos (empty = newest), e.g. parte-treinos-1a2b3c4"
+        required: false
+      versao_adm:
+        description: "Release tag for adm (empty = newest), e.g. parte-adm-1a2b3c4"
+        required: false
+  repository_dispatch:
+    types: [parte-atualizada]
 
 permissions:
   contents: read
@@ -19,13 +28,14 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+      - name: Assemble site (cover + parts from releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSAO_TREINOS: ${{ inputs.versao_treinos || (github.event.client_payload.parte == 'treinos' && github.event.client_payload.tag) || '' }}
+          VERSAO_ADM: ${{ inputs.versao_adm || (github.event.client_payload.parte == 'adm' && github.event.client_payload.tag) || '' }}
+        run: bash .github/scripts/montar_site.sh _site
       - name: Check HTML, internal links and data-like files
-        run: python3 .github/scripts/check_site.py .
-      - name: Build Pages artifact
-        if: github.event_name != 'pull_request'
-        run: |
-          mkdir -p _site
-          rsync -a --exclude '.git' --exclude '.github' --exclude '_site' ./ _site/
+        run: python3 .github/scripts/check_site.py _site
       - uses: actions/upload-pages-artifact@v3
         if: github.event_name != 'pull_request'
         with:
@@ -45,3 +55,23 @@ jobs:
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  prune:
+    # Keep the 10 newest versions of each part (older ones can't be rolled back to).
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - run: |
+          for parte in treinos adm; do
+            gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
+              -q "[.[] | select(.tagName | startswith(\"parte-$parte-\"))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName" |
+            while read -r tag; do
+              gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
+            done
+          done
