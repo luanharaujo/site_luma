@@ -26,9 +26,12 @@ jobs:
   check:
     runs-on: ubuntu-latest
     timeout-minutes: 5
+    outputs:
+      publicadas: ${{ steps.montar.outputs.publicadas }}
     steps:
       - uses: actions/checkout@v4
       - name: Assemble site (cover + parts from releases)
+        id: montar
         env:
           GH_TOKEN: ${{ github.token }}
           VERSAO_TREINOS: ${{ inputs.versao_treinos || (github.event.client_payload.parte == 'treinos' && github.event.client_payload.tag) || '' }}
@@ -59,19 +62,24 @@ jobs:
   prune:
     # Keep the 10 newest versions of each part (older ones can't be rolled back to).
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-    needs: deploy
+    needs: [check, deploy]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
+      PUBLICADAS: ${{ needs.check.outputs.publicadas }}
     steps:
       - run: |
+          set -euo pipefail
+          lista="$(gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt)"
           for parte in treinos adm; do
-            gh release list --repo "$GITHUB_REPOSITORY" --limit 200 --json tagName,createdAt \
-              -q "[.[] | select(.tagName | startswith(\"parte-$parte-\"))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName" |
+            jq -r --arg p "parte-$parte-" \
+              '[.[] | select(.tagName | startswith($p))] | sort_by(.createdAt) | reverse | .[10:] | .[].tagName' <<<"$lista" |
             while read -r tag; do
+              # Never delete a version that is live right now (e.g. after a rollback).
+              case " $PUBLICADAS " in *" $tag "*) echo "keep live $tag"; continue;; esac
               gh release delete "$tag" --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes
             done
           done
