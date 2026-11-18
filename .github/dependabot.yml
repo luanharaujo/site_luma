@@ -1,0 +1,13 @@
+# Weekly dependency updates. New versions wait 3 days (cooldown); security fixes skip the wait.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 3
+    groups:
+      actions-minor-patch:
+        update-types: ["minor", "patch"]
+    open-pull-requests-limit: 3
