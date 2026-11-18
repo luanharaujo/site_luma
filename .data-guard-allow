@@ -1,0 +1,2 @@
+# Values and files the personal-data check accepts (web-quality-kit data guard), one hash per line.
+71f68f36cbcdfce0  # _site/adm/versao.json: build stamp of the adm part, not data
