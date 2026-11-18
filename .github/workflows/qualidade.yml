@@ -1,0 +1,42 @@
+# Health panel (web-quality-kit): valid HTML, broken links, Lighthouse with axe
+# and personal data (repository and assembled site), compared with main
+# ("never worse"). Starts as a baseline: what already exists only warns.
+# treinos/ and adm/ have their own panels in their source repositories.
+name: qualidade
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: qualidade-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  web-health:
+    runs-on: ubuntu-latest   # public repository: always GitHub's machine
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read   # main's health numbers
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Assemble site (cover + parts from releases)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash .github/scripts/montar_site.sh _site
+      - uses: luanharaujo/web-quality-kit/actions/web-ci@v1
+        with:
+          lang: pt
+          html-globs: index.html
+          site-dir: _site
+          lighthouse-paths: /
+          data-guard: "true"
