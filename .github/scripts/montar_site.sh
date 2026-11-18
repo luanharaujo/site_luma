@@ -5,7 +5,8 @@
 #
 # Which version of each part goes live:
 #   1. VERSAO_<PARTE> env (workflow_dispatch input or dispatch payload), e.g. parte-adm-1a2b3c4
-#   2. otherwise the newest release whose tag starts with "parte-<name>-"
+#   2. otherwise the most recently published release of that part that is not a
+#      draft and has its asset uploaded (rules in versoes.jq)
 # Rollback = run the workflow with the previous version, or delete the bad release.
 set -euo pipefail
 out="${1:-_site}"
@@ -22,10 +23,9 @@ for parte in treinos adm; do
   tag="${!var:-}"
   if [ -z "$tag" ]; then
     # Fail loudly if the API call fails (an empty list is fine, an error is not).
-    lista="$(gh release list --repo "$repo" --limit 100 --json tagName,createdAt)" \
+    lista="$(gh api --paginate "repos/$repo/releases?per_page=100" --jq '.[]')" \
       || { echo "::error::$parte: could not list releases"; exit 1; }
-    tag="$(jq -r --arg p "parte-$parte-" \
-      '[.[] | select(.tagName | startswith($p))] | sort_by(.createdAt) | last | .tagName // empty' <<<"$lista")"
+    tag="$(jq -s -r --arg parte "$parte" -f "$(dirname "$0")/versoes.jq" <<<"$lista" | tail -n 1)"
   fi
   case "$tag" in ""|parte-"$parte"-*) ;; *) echo "::error::$parte: bad version '$tag'"; exit 1;; esac
   if [ -n "$tag" ] && gh release download "$tag" --repo "$repo" \
