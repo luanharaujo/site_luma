@@ -1,0 +1,40 @@
+# Detection only, never blocks. A pull request must be opened by the agents' GitHub App
+# (publicar_github pr). If the author is anyone else, label it "outside the flow" and leave
+# one short comment (Portuguese, for the owner and the agents). It has no secrets and never
+# checks out PR code (pull_request_target runs main's copy of this file). A failure here only
+# shows as a red step in this workflow; it is not a required check and the queue ignores it.
+name: Outside the flow
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  pull-requests: write
+  issues: write
+
+jobs:
+  detect:
+    if: >-
+      github.event.pull_request.user.login != 'luanharaujo-agents[bot]' &&
+      github.event.pull_request.user.login != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    continue-on-error: true
+    steps:
+      - name: Label and comment once
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          gh label create "outside the flow" -R "$REPO" --color d93f0b \
+            --description "PR not opened by the agents' App (publicar_github pr)" 2>/dev/null || true
+          gh pr edit "$PR" -R "$REPO" --add-label "outside the flow"
+          if gh pr view "$PR" -R "$REPO" --json comments --jq '.comments[].body' | grep -q 'outside-the-flow-marker'; then
+            exit 0
+          fi
+          gh pr comment "$PR" -R "$REPO" --body "<!-- outside-the-flow-marker -->
+          **Fora do fluxo.** Este PR foi aberto por \`$AUTHOR\`, e não pela App dos agentes. Assim o autor é o próprio Luan (que então não consegue aprovar), o PR não tem revisor pedido nem dono registrado para os avisos de CI. **O que fazer:** fechar este PR e reabrir a mesma branch pelo \`publicar_github pr\`. Este aviso só detecta, não bloqueia nada."
