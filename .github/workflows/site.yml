@@ -77,7 +77,7 @@ jobs:
       contents: read
       actions: read
     steps:
-      - uses: luanharaujo/web-quality-kit/actions/web-live@v1.1.0
+      - uses: luanharaujo/web-quality-kit/actions/web-live@v1
         with:
           base-url: https://duoluma.com.br
           pages-artifact: "true"
