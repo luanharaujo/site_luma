@@ -47,7 +47,8 @@ for parte in treinos adm; do
     if tar -tzf "$tmp/$parte/$parte.tar.gz" | grep -qE '(^/|(^|/)\.\.(/|$))'; then
       echo "::error::$parte: unsafe paths in tarball"; exit 1
     fi
-    tar -xzf "$tmp/$parte/$parte.tar.gz" -C "$out/$parte" --no-same-owner
+    tar -xzf "$tmp/$parte/$parte.tar.gz" -C "$out/$parte" --no-same-owner --exclude="._*" --exclude=".DS_Store"
+    find "$out/$parte" \( -name "._*" -o -name ".DS_Store" \) -delete  # macOS AppleDouble junk
     echo "$parte: $tag ($origem)"; echo "| $parte | $tag | $origem |" >> "$resumo"
     publicadas="${publicadas:-} $tag"
   else
