@@ -37,4 +37,4 @@ jobs:
             exit 0
           fi
           gh pr comment "$PR" -R "$REPO" --body "<!-- outside-the-flow-marker -->
-          **Fora do fluxo.** Este PR foi aberto por \`$AUTHOR\`, e não pela App dos agentes. Assim o autor é o próprio Luan (que então não consegue aprovar), o PR não tem revisor pedido nem dono registrado para os avisos de CI. **O que fazer:** fechar este PR e reabrir a mesma branch pelo \`publicar_github pr\`. Este aviso só detecta, não bloqueia nada."
+          **Outside the flow.** This PR was opened by \`$AUTHOR\`, not by the agents' App. So the author is the repository owner (who then cannot approve it), and the PR has no requested reviewer and no registered owner for CI notices. **What to do:** close this PR and reopen the same branch with \`publicar_github pr\`. This notice only detects; it blocks nothing."
