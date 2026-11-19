@@ -15,9 +15,9 @@ on:
   push:
     branches: [main]
   pull_request_target:          # runs main's copy of this file; PR code is never checked out
-    types: [auto_merge_enabled, synchronize]   # synchronize: a push on the branch clears the conflict label
+    types: [auto_merge_enabled, auto_merge_disabled, synchronize]   # synchronize: a push on the branch clears the conflict label
   workflow_run:                 # CI finished somewhere, or the owner approved a PR
-    workflows: ["site", "Merge queue trigger"]
+    workflows: ["qualidade", "site", "Merge queue trigger"]
     types: [completed]
   workflow_dispatch:
 
@@ -57,6 +57,28 @@ jobs:
           if [ "$ACTION" = synchronize ] && [ -n "$PR" ]; then
             gh pr edit "$PR" -R "$REPO" --remove-label "merge-queue: conflict" >/dev/null 2>&1 || true
           fi
+          # Re-arm: GitHub turns auto-merge off by itself when the merge fails, e.g. "Rebase failed" (the
+          # branch had a merge commit) or "without `workflows` permission" (the agents App turned it on for a
+          # PR that changes a workflow). An approved PR that can be rebased now gets it back from this App
+          # (it has workflows: write). Once per failure: if the queue itself had turned it on, it stays off.
+          # A person turning auto-merge off is respected (no reason code).
+          rq='query($o:String!,$n:String!,$b:String!){repository(owner:$o,name:$n){pullRequests(states:OPEN,baseRefName:$b,first:50){nodes{
+               number isDraft reviewDecision canBeRebased mergeStateStatus autoMergeRequest{mergeMethod}
+               timelineItems(last:2,itemTypes:[AUTO_MERGE_DISABLED_EVENT,AUTO_MERGE_ENABLED_EVENT,AUTO_REBASE_ENABLED_EVENT]){nodes{
+                 __typename ... on AutoMergeDisabledEvent{reasonCode}
+                 ... on AutoMergeEnabledEvent{actor{login}} ... on AutoRebaseEnabledEvent{actor{login}}}}}}}}'
+          rearm=$(gh api graphql -f query="$rq" -f o="${REPO%/*}" -f n="${REPO#*/}" -f b="$BASE" --jq '
+              .data.repository.pullRequests.nodes[]
+              | select(.isDraft|not) | select(.autoMergeRequest|not) | select(.reviewDecision=="APPROVED")
+              | select(.canBeRebased) | select(.mergeStateStatus!="DIRTY")
+              | .timelineItems.nodes as $t | select(($t|length) > 0)
+              | select($t[-1].__typename=="AutoMergeDisabledEvent")
+              | select($t[-1].reasonCode|IN("rebase","workflow_policy_update_error","merge_conflict"))
+              | select(($t|length) < 2 or ($t[0].actor.login // "") != "luanharaujo-merge-queue")
+              | .number') || rearm=""
+          for n in $rearm; do
+            if gh pr merge "$n" -R "$REPO" --auto --rebase; then echo "Re-armed auto-merge on #$n"; else echo "::warning::could not re-arm #$n"; fi
+          done
           q='query($o:String!,$n:String!,$b:String!){repository(owner:$o,name:$n){pullRequests(states:OPEN,baseRefName:$b,first:50,orderBy:{field:CREATED_AT,direction:ASC}){nodes{
                id number isDraft reviewDecision mergeStateStatus headRefOid autoMergeRequest{mergeMethod}
                labels(first:20){nodes{name}} commits(last:1){nodes{commit{committedDate statusCheckRollup{state}}}}}}}}'
