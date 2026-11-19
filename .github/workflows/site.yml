@@ -29,7 +29,7 @@ jobs:
     outputs:
       publicadas: ${{ steps.montar.outputs.publicadas }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Test version choice (regression for the 18/11 race)
         run: bash .github/tests/test_montar_site.sh
       - name: Assemble site (cover + parts from releases)
@@ -95,7 +95,7 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       PUBLICADAS: ${{ needs.check.outputs.publicadas }}
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           sparse-checkout: .github/scripts
       - run: |
