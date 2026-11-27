@@ -33,7 +33,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash .github/scripts/montar_site.sh _site
-      - uses: luanharaujo/web-quality-kit/actions/web-ci@v1
+      - uses: luanharaujo/web-quality-kit/actions/web-ci@9ca1677bd7f2b5c90172c0db9d5038812b87e1d4 # v1.23.0
         with:
           lang: pt
           html-globs: index.html
