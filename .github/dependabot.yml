@@ -10,4 +10,7 @@ updates:
     groups:
       actions-minor-patch:
         update-types: ["minor", "patch"]
+    ignore:
+      # The canary distributes the kit's updates.
+      - dependency-name: "luanharaujo/*-quality-kit*"
     open-pull-requests-limit: 3
